@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wujje Store — Услуги и публичная оферта</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --text: #f3f5f8;
+      --muted: #9aa3b2;
+      --accent: #4f7cff;
+      --border: #262b36;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px 16px 64px;
+    }
+    .container { max-width: 860px; margin: 0 auto; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .brand { font-size: 24px; font-weight: 700; }
+    .badge {
+      font-size: 13px;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+    nav a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 10px;
+    }
+    nav a:hover { border-color: var(--accent); }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+    h2 { font-size: 19px; margin-bottom: 12px; }
+    h3 { font-size: 16px; margin: 14px 0 6px; }
+    p, li { color: var(--muted); font-size: 15px; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th { color: var(--text); }
+    td { color: var(--muted); }
+    .offer-box {
+      white-space: pre-wrap;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      max-height: 440px;
+      overflow-y: auto;
+    }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 28px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">Wujje Store</div>
+      <div class="badge">Самозанятый (НПД) • Оказание услуг</div>
+    </header>
+
+    <nav>
+      <a href="#services">Услуги и цены</a>
+      <a href="#terms">Условия и возврат</a>
+      <a href="#contacts">Контакты и реквизиты</a>
+      <a href="#offer">Публичная оферта</a>
+    </nav>
+
+    <section id="services">
+      <h2>Описание и стоимость услуг</h2>
+      <p>
+        Wujje Store оказывает цифровые и информационно-технические услуги в рамках специального налогового режима «Налог на профессиональный доход» (НПД).
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Наименование услуги</th>
+            <th>Описание</th>
+            <th>Стоимость</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Настройка и сопровождение бота / интерфейса</td>
+            <td>Конфигурация сценариев, кнопок и пользовательских уведомлений</td>
+            <td>от 100 ₽</td>
+          </tr>
+          <tr>
+            <td>Оформление и графический пакет</td>
+            <td>Подготовка визуальных материалов и баннеров по ТЗ заказчика</td>
+            <td>от 150 ₽</td>
+          </tr>
+          <tr>
+            <td>Техническая консультация</td>
+            <td>Разбор логики проекта, проверка настроек и рекомендации</td>
+            <td>от 200 ₽</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="terms">
+      <h2>Порядок оказания услуг и возврат средств</h2>
+      <h3>Сроки и порядок оказания</h3>
+      <ul>
+        <li>Услуга начинает оказываться после поступления оплаты и получения необходимых вводных данных от заказчика.</li>
+        <li>Результат передаётся в электронном виде (в интерфейсе сервиса, по ссылке или через согласованный канал связи).</li>
+      </ul>
+      <h3>Возврат и отказ от услуги</h3>
+      <ul>
+        <li>Если оказание услуги ещё не начато, заказчик вправе обратиться за возвратом средств до момента старта работ.</li>
+        <li>После полного оказания и передачи результата цифровой услуги возврат не производится, за исключением случаев, когда услуга не была оказана по вине исполнителя.</li>
+        <li>Для оформления возврата или урегулирования спорных ситуаций напишите в поддержку с указанием деталей платежа.</li>
+      </ul>
+    </section>
+
+    <section id="contacts">
+      <h2>Контакты и данные исполнителя</h2>
+      <ul>
+        <li><strong>Исполнитель:</strong> Плательщик налога на профессиональный доход (самозанятый) Чубко Владислав Владимирович</li>
+        <li><strong>Электронная почта:</strong> vladcubko5@gmail.com</li>
+        <li><strong>Канал поддержки:</strong> связь через официальные каналы проекта Wujje Store</li>
+      </ul>
+    </section>
+
+    <section id="offer">
+      <h2>Публичная оферта</h2>
+      <div class="offer-box">ПУБЛИЧНАЯ ОФЕРТА НА ОКАЗАНИЕ ЦИФРОВЫХ И ИНФОРМАЦИОННЫХ УСЛУГ
+
+1. Общие положения
+1.1. Настоящий документ является официальным предложением (публичной офертой) Исполнителя — плательщика налога на профессиональный доход (самозанятого) Чубко Владислава Владимировича (далее — «Исполнитель»), действующего в соответствии с Федеральным законом № 422-ФЗ, адресованным любому дееспособному физическому лицу или организации (далее — «Заказчик»).
+1.2. Полным и безоговорочным принятием (акцептом) оферты считается совершение Заказчиком оплаты выбранной услуги через платёжный интерфейс сервиса Wujje Store.
+
+2. Предмет договора
+2.1. Исполнитель обязуется оказать Заказчику выбранные цифровые, информационно-технические или оформительские услуги (настройка сценариев/интерфейсов, подготовка графических материалов по ТЗ, технические консультации), а Заказчик обязуется оплатить их в соответствии с условиями настоящей оферты.
+2.2. Перечень, описание и стоимость услуг размещены на странице Wujje Store и могут обновляться Исполнителем без обратной силы для уже оплаченных заказов.
+
+3. Порядок оказания услуг и расчёты
+3.1. Расчёты производятся в рублях РФ безналичным способом через подключённые платёжные инструменты.
+3.2. Обязательства по формированию и передаче чека в рамках режима НПД исполняются Исполнителем в установленном законом порядке.
+3.3. Оказание услуги начинается после поступления оплаты и передачи Заказчиком необходимых исходных данных/требований. Результат предоставляется в электронном виде.
+
+4. Возврат средств и ответственность
+4.1. Заказчик вправе запросить возврат уплаченных средств до начала оказания услуги. После начала работ или передачи результата услуги возврат осуществляется только при невозможности оказания услуги по вине Исполнителя.
+4.2. Исполнитель не несёт ответственности за сбои в работе сторонних сервисов, сетей связи или платёжных шлюзов, возникшие не по вине Исполнителя.
+
+5. Контакты Исполнителя
+Исполнитель: Чубко Владислав Владимирович (плательщик НПД)
+E-mail: vladcubko5@gmail.com</div>
+    </section>
+
+    <footer>
+      © Wujje Store. Все права защищены.
+    </footer>
+  </div>
+</body>
+</html>
