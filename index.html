@@ -973,11 +973,9 @@
 
       <div id="payModalStatus" class="status-note"></div>
     </div>
-  </div><script>
-    const TON_RATE_RUB = 84;
-    const SAFE_MARKUP = 1.12;
-    const tonFloorToRub = (ton) => Math.max(150, Math.round(Number(ton) * TON_RATE_RUB * SAFE_MARKUP));
-    const rubToTonSafe = (rub) => Math.max(0.05, Number((Number(rub) / TON_RATE_RUB).toFixed(2)));
+  </div><script src="./config.js"></script><script>
+    const tonFloorToRub = (ton) => Math.max(150, Math.round(Number(ton) * CONFIG.TON_RATE_RUB * CONFIG.SAFE_MARKUP));
+    const rubToTonSafe = (rub) => Math.max(0.05, Number((Number(rub) / CONFIG.TON_RATE_RUB).toFixed(2)));
 
     function svgArt(title, floorLabel, bgHex, accentHex, symbol) {
       const safeTitle = title.replace(/&/g, "&amp;").replace(/</g, "&lt;");
@@ -1172,14 +1170,6 @@
       items: cat.items ? cat.items.map((it) => (it.rub ? { ...it, ton: rubToTonSafe(it.rub), subPriceText: it.subPriceText || `${rubToTonSafe(it.rub)} TON` } : it)) : []
     }));
 
-    const DEFAULT_PAY_URL = "https://t.tb.ru/pm_short/2L0Yb9q9Ehb";
-    const API_BASE = "https://taxes-emotions-note-expense.trycloudflare.com";
-    const RECEIVER_WALLET = "UQACI8bEF66IOMZr7mNEsxR3dQi-eEp29G2fH18Wrr03gmxp";
-    const MANIFEST_URL = "https://ksyura0.github.io/wujje-store-webapp/tonconnect-manifest.json";
-    const ORDERS_KEY = "wujje_orders_history_v1";
-    const RECENT_KEY = "wujje_recent_usernames_v1";
-    const PROMO_KEY = "wujje_applied_promo_v1";
-    const THEME_KEY = "wujje_theme_v1";
 
     const tg = window.Telegram?.WebApp;
     if (tg) { tg.ready(); tg.expand(); }
@@ -1190,8 +1180,11 @@
       const n = Math.max(1, Number(starsCount) || 50);
       const exact = PACKAGES.find((p) => p.stars === n);
       if (exact) return { stars: n, rub: exact.rub, ton: exact.ton };
+
+      // Base rate from first package: 76 ₽ / 50 stars = 1.52 ₽/star
+      const baseRate = PACKAGES[0].rub / PACKAGES[0].stars;
       const discount = n >= 5000 ? 0.90 : n >= 1000 ? 0.94 : n >= 350 ? 0.97 : 1.0;
-      const rub = Math.max(10, Math.round(n * (105 / 50) * discount));
+      const rub = Math.max(10, Math.round(n * baseRate * discount));
       return { stars: n, rub, ton: rubToTonSafe(rub) };
     }
 
@@ -1202,24 +1195,24 @@
     let activeCategory = null;
     let activeNftCollection = null;
     let activeFilter = "all";
-    let rubBalance = Number(localStorage.getItem("wujje_rub_balance") || "0");
+    let rubBalance = Number(localStorage.getItem(CONFIG.BALANCE_KEY) || "0");
     let balanceInitialized = false;
     let resolvedRecipient = null;
     let resolveTimer = null;
     let resolveSeq = 0;
-    let appliedPromo = (() => { try { return JSON.parse(localStorage.getItem(PROMO_KEY) || "null"); } catch { return null; } })();
+    let appliedPromo = (() => { try { return JSON.parse(localStorage.getItem(CONFIG.PROMO_KEY) || "null"); } catch { return null; } })();
     let referralStats = { total_refs: 0, verified_refs: 0, earned_rub: 0, claimed_rub: 0, available_rub: 0 };
 
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: MANIFEST_URL,
+      manifestUrl: CONFIG.MANIFEST_URL,
       buttonRootId: "ton-connect-btn"
     });
 
-    let currentTheme = localStorage.getItem(THEME_KEY) || "violet";
+    let currentTheme = localStorage.getItem(CONFIG.THEME_KEY) || "violet";
     function applyTheme(themeId, save = true) {
       currentTheme = THEMES.some((t) => t.id === themeId) ? themeId : "violet";
       document.documentElement.setAttribute("data-theme", currentTheme);
-      if (save) localStorage.setItem(THEME_KEY, currentTheme);
+      if (save) localStorage.setItem(CONFIG.THEME_KEY, currentTheme);
       renderThemePickers();
     }
 
@@ -1250,7 +1243,7 @@
     const themeSheet = document.getElementById("themeSheet");
     document.getElementById("confirmThemeBtn").addEventListener("click", () => {
       haptic("medium");
-      localStorage.setItem(THEME_KEY, currentTheme);
+      localStorage.setItem(CONFIG.THEME_KEY, currentTheme);
       themeSheet.classList.remove("open");
     });
 
@@ -1608,7 +1601,11 @@
     async function resolveUsername(raw) {
       const clean = (raw || "").trim();
       const norm = clean.startsWith("@") ? clean : (clean ? "@" + clean : "");
-      if (norm.length < 5) { resolvedRecipient = null; userPreview.className = "user-preview"; return null; }
+      if (!VALIDATORS.isValidUsername(norm)) {
+        resolvedRecipient = null;
+        userPreview.className = "user-preview";
+        return null;
+      }
 
       const seq = ++resolveSeq;
       userPreview.className = "user-preview visible";
@@ -1617,28 +1614,21 @@
       document.getElementById("userHandle").textContent = norm;
       document.getElementById("userStatusTag").textContent = "";
 
-      try {
-        const res = await fetch(`${API_BASE}/api/resolve_username`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: norm })
-        });
-        const data = await res.json();
-        if (seq !== resolveSeq) return null;
-        if (data.ok) {
-          resolvedRecipient = data;
-          userPreview.className = "user-preview visible found";
-          document.getElementById("userFullName").textContent = data.full_name;
-          document.getElementById("userHandle").textContent = data.username;
-          document.getElementById("userStatusTag").innerHTML = `<span style="color:var(--green)">Найден</span>`;
-          document.getElementById("userAvatar").innerHTML = data.avatar_url
-            ? `<img src="${API_BASE}${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`
-            : (data.full_name?.[0] || "U").toUpperCase();
-          return data;
-        }
-      } catch (e) {}
-
+      const data = await API.resolveUsername(norm);
       if (seq !== resolveSeq) return null;
+
+      if (data?.ok) {
+        resolvedRecipient = data;
+        userPreview.className = "user-preview visible found";
+        document.getElementById("userFullName").textContent = data.full_name;
+        document.getElementById("userHandle").textContent = data.username;
+        document.getElementById("userStatusTag").innerHTML = `<span style="color:var(--green)">Найден</span>`;
+        document.getElementById("userAvatar").innerHTML = data.avatar_url
+          ? `<img src="${CONFIG.API_BASE}${data.avatar_url}?t=${Date.now()}" style="width:100%;height:100%;object-fit:cover;">`
+          : (data.full_name?.[0] || "U").toUpperCase();
+        return data;
+      }
+
       resolvedRecipient = null;
       userPreview.className = "user-preview visible not-found";
       document.getElementById("userAvatar").textContent = "!";
@@ -1664,7 +1654,7 @@
     });
 
     function renderRecentUsers() {
-      const list = (() => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; } })();
+      const list = STORAGE.getRecentUsers();
       const box = document.getElementById("recentUsernamesBox");
       box.innerHTML = list.map((u) => `<button type="button" class="recent-chip" data-u="${u}">${u}</button>`).join("");
       box.querySelectorAll(".recent-chip").forEach((c) => c.addEventListener("click", () => {
@@ -1674,19 +1664,13 @@
     }
 
     function saveRecentUser(u) {
-      if (!u?.startsWith("@")) return;
-      const list = (() => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; } })()
-        .filter((x) => x.toLowerCase() !== u.toLowerCase());
-      list.unshift(u);
-      localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 4)));
+      STORAGE.saveRecentUser(u);
       renderRecentUsers();
     }
 
-    const loadOrders = () => { try { return JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]"); } catch { return []; } };
+    const loadOrders = () => STORAGE.getOrders();
     function saveOrder(o) {
-      const list = loadOrders();
-      list.unshift(o);
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(list.slice(0, 50)));
+      STORAGE.saveOrder(o);
       updateOrdersBadge();
     }
     function updateOrdersBadge() {
@@ -1699,7 +1683,7 @@
     function setRubBalance(val, animate = false) {
       const old = rubBalance;
       rubBalance = val;
-      localStorage.setItem("wujje_rub_balance", String(rubBalance));
+      localStorage.setItem(CONFIG.BALANCE_KEY, String(rubBalance));
       document.getElementById("rubBalanceText").textContent = `${fmt(rubBalance)} ₽`;
 
       const hint = document.getElementById("balanceCapacityHint");
@@ -1725,18 +1709,11 @@
 
     async function syncBalance() {
       if (!tg?.initData) return;
-      try {
-        const res = await fetch(`${API_BASE}/api/balance`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData: tg.initData })
-        });
-        const data = await res.json();
-        if (data.ok && typeof data.balance === "number") {
-          setRubBalance(data.balance, balanceInitialized);
-          balanceInitialized = true;
-        }
-      } catch (e) {}
+      const data = await API.syncBalance(tg.initData);
+      if (data?.ok && typeof data.balance === "number") {
+        setRubBalance(data.balance, balanceInitialized);
+        balanceInitialized = true;
+      }
     }
 
     function renderOrders() {
@@ -1751,7 +1728,7 @@
       `).join("");
     }
     document.getElementById("clearOrdersBtn").addEventListener("click", () => {
-      localStorage.removeItem(ORDERS_KEY);
+      STORAGE.clearOrders();
       updateOrdersBadge();
       renderOrders();
     });
@@ -1760,19 +1737,12 @@
       const uid = tg?.initDataUnsafe?.user?.id;
       document.getElementById("refLinkText").textContent = uid ? `https://t.me/wujje_store_bot?start=ref_${uid}` : "https://t.me/wujje_store_bot";
       if (!tg?.initData) return;
-      try {
-        const res = await fetch(`${API_BASE}/api/referral`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData: tg.initData })
-        });
-        const d = await res.json();
-        if (d?.ok) {
-          referralStats = d;
-          document.getElementById("refCountsVal").textContent = `${d.total_refs || 0} / ${d.verified_refs || 0}`;
-          document.getElementById("refAvailableVal").textContent = `${fmt(d.available_rub || 0)} ₽`;
-        }
-      } catch (e) {}
+      const d = await API.getReferralInfo(tg.initData);
+      if (d?.ok) {
+        referralStats = d;
+        document.getElementById("refCountsVal").textContent = `${d.total_refs || 0} / ${d.verified_refs || 0}`;
+        document.getElementById("refAvailableVal").textContent = `${fmt(d.available_rub || 0)} ₽`;
+      }
     }
 
     function renderProfile() {
@@ -1830,16 +1800,12 @@
     document.getElementById("claimRefBtn").addEventListener("click", async () => {
       const note = document.getElementById("refStatusNote");
       note.textContent = "Зачисляем...";
-      try {
-        const res = await fetch(`${API_BASE}/api/referral/claim`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData: tg?.initData || "" })
-        });
-        const d = await res.json();
-        note.textContent = d.message || (d.ok ? "Готово!" : "Нет доступного дохода.");
-        if (d.ok && typeof d.balance === "number") { setRubBalance(d.balance, true); syncReferralInfo(); }
-      } catch (e) { note.textContent = "Ошибка сети."; }
+      const d = await API.claimReferral(tg?.initData || "");
+      note.textContent = d?.message || (d?.ok ? "Готово!" : "Нет доступного дохода.");
+      if (d?.ok && typeof d.balance === "number") {
+        setRubBalance(d.balance, true);
+        await syncReferralInfo();
+      }
     });
 
     const topupModal = document.getElementById("topupModal");
@@ -1859,18 +1825,14 @@
     document.getElementById("applyPromoBtn").addEventListener("click", async () => {
       const code = document.getElementById("promoCodeInput").value.trim().toUpperCase();
       const st = document.getElementById("promoStatusText");
-      if (!code) return;
-      try {
-        const res = await fetch(`${API_BASE}/api/promo`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData: tg?.initData || "", code })
-        });
-        const d = await res.json();
-        st.textContent = d.message || (d.ok ? "Промокод применён!" : "Не найден.");
-        st.className = `promo-status ${d.ok ? "ok" : "err"}`;
-        if (d.ok) { appliedPromo = { code, bonus_percent: d.bonus_percent || 10 }; localStorage.setItem(PROMO_KEY, JSON.stringify(appliedPromo)); }
-      } catch (e) { st.textContent = "Ошибка сети."; st.className = "promo-status err"; }
+      if (!code || !VALIDATORS.isValidPromoCode(code)) { st.textContent = "Некорректный формат."; st.className = "promo-status err"; return; }
+      const d = await API.applyPromoCode(tg?.initData || "", code);
+      st.textContent = d?.message || (d?.ok ? "Промокод применён!" : "Не найден.");
+      st.className = `promo-status ${d?.ok ? "ok" : "err"}`;
+      if (d?.ok) {
+        appliedPromo = { code, bonus_percent: d.bonus_percent || 10 };
+        STORAGE.setJSON(CONFIG.PROMO_KEY, appliedPromo);
+      }
     });
 
     document.getElementById("refreshBalanceBtn").addEventListener("click", async () => {
@@ -1881,23 +1843,16 @@
     document.getElementById("confirmTopupBtn").addEventListener("click", async () => {
       const amount = Number(topupAmountInput.value);
       const st = document.getElementById("topupStatus");
-      if (!amount || amount < 10) { st.textContent = "Минимум 10 ₽."; return; }
+      if (!VALIDATORS.isValidRubAmount(amount)) { st.textContent = "Минимум 10 ₽."; return; }
       st.textContent = "Готовим QR-код...";
-      try {
-        const res = await fetch(`${API_BASE}/api/topup`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData: tg?.initData || "", amount_rub: amount, method: "СБП / QR", promo_code: appliedPromo?.code || null })
-        });
-        const d = await res.json();
-        if (d.ok) {
-          st.textContent = "";
-          document.getElementById("topupQrMeta").innerHTML = `Заявка <b>#${d.topup_id}</b> · Сумма: <b>${fmt(amount)} ₽</b>`;
-          document.getElementById("topupQrImg").src = `${API_BASE}/api/sbp_qr.png?t=${Date.now()}`;
-          document.getElementById("topupPayLink").href = d.pay_url || DEFAULT_PAY_URL;
-          document.getElementById("topupQrBox").classList.add("open");
-        } else st.textContent = "Открой приложение внутри Telegram.";
-      } catch (e) { st.textContent = "Нет связи с сервером."; }
+      const d = await API.requestTopup(tg?.initData || "", amount, "СБП / QR", appliedPromo?.code || null);
+      if (d?.ok) {
+        st.textContent = "";
+        document.getElementById("topupQrMeta").innerHTML = `Заявка <b>#${d.topup_id}</b> · Сумма: <b>${fmt(amount)} ₽</b>`;
+        document.getElementById("topupQrImg").src = `${CONFIG.API_BASE}/api/sbp_qr.png?t=${Date.now()}`;
+        document.getElementById("topupPayLink").href = d.pay_url || CONFIG.DEFAULT_PAY_URL;
+        document.getElementById("topupQrBox").classList.add("open");
+      } else st.textContent = "Открой приложение внутри Telegram.";
     });
 
     const payModal = document.getElementById("payModal");
@@ -1943,26 +1898,19 @@
     document.getElementById("payWithBalanceBtn").addEventListener("click", async () => {
       const st = document.getElementById("payModalStatus");
       const recipient = quickRecipientInput.value.trim();
-      if (recipient.length < 2) { st.textContent = "Укажи получателя."; return; }
+      if (!VALIDATORS.isValidUsername(recipient)) { st.textContent = "Укажи корректного получателя."; return; }
       const rub = currentCheckoutItem.rub;
       if (rubBalance < rub) { st.textContent = "Недостаточно средств на балансе."; return; }
 
       if (checkoutMode === "stars" && resolvedRecipient) {
         st.textContent = "Проводим оплату...";
-        try {
-          const res = await fetch(`${API_BASE}/api/pay_balance`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ initData: tg?.initData || "", stars: selectedPackage.stars, target: recipient })
-          });
-          const d = await res.json();
-          if (d.ok) {
-            setRubBalance(d.balance, true);
-            saveOrder({ id: d.order_id, stars: selectedPackage.stars, itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "Оплачен", dateText: new Date().toLocaleString("ru-RU") });
-            payModal.classList.remove("open");
-            document.getElementById("statusNote").textContent = `✅ Заказ #${d.order_id} оплачен!`;
-          } else st.textContent = "Ошибка оплаты.";
-        } catch (e) { st.textContent = "Нет связи с сервером."; }
+        const d = await API.payWithBalance(tg?.initData || "", selectedPackage.stars, recipient);
+        if (d?.ok) {
+          setRubBalance(d.balance, true);
+          saveOrder({ id: d.order_id, stars: selectedPackage.stars, itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "Оплачен", dateText: new Date().toLocaleString("ru-RU") });
+          payModal.classList.remove("open");
+          document.getElementById("statusNote").textContent = `✅ Заказ #${d.order_id} оплачен!`;
+        } else st.textContent = "Ошибка оплаты.";
         return;
       }
 
@@ -1976,14 +1924,14 @@
     document.getElementById("payWithCryptoBtn").addEventListener("click", async () => {
       const st = document.getElementById("payModalStatus");
       const recipient = quickRecipientInput.value.trim();
-      if (recipient.length < 2) { st.textContent = "Укажи получателя."; return; }
+      if (!VALIDATORS.isValidUsername(recipient)) { st.textContent = "Укажи корректного получателя."; return; }
       if (!tonConnectUI.wallet) { await tonConnectUI.openModal(); return; }
       const ton = currentCheckoutItem.ton;
       try {
         st.textContent = "Подтверди в кошельке...";
         await tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 300,
-          messages: [{ address: RECEIVER_WALLET, amount: Math.round(ton * 1e9).toString() }]
+          messages: [{ address: CONFIG.RECEIVER_WALLET, amount: Math.round(ton * 1e9).toString() }]
         });
         const id = "ton_" + Date.now();
         saveOrder({ id, stars: checkoutMode === "stars" ? selectedPackage.stars : null, itemLabel: currentCheckoutItem.label, target: recipient, tonAmount: ton, priceLabel: `${ton} TON`, method: "Crypto TON", statusText: "На проверке", dateText: new Date().toLocaleString("ru-RU") });
