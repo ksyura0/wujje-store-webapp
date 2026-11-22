@@ -2014,7 +2014,21 @@
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
 
-    window.addEventListener("load", () => {
+    window.addEventListener("load", async () => {
+      // Wait for config.js and API to be ready
+      let attempts = 0;
+      while (!window.CONFIG && attempts < 30) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+      }
+
+      // Wait for app initialization
+      let initAttempts = 0;
+      while (!window.APP_INITIALIZED && initAttempts < 50) {
+        await new Promise(r => setTimeout(r, 100));
+        initAttempts++;
+      }
+
       setTimeout(() => {
         document.getElementById("splash")?.classList.add("hide");
         document.getElementById("app")?.classList.add("app-ready");
@@ -2348,6 +2362,7 @@
   }
 
   syncLiveGiftsCatalog();
+  window.APP_INITIALIZED = true;  // Signal that app is ready to display
   setInterval(() => {
     if (document.visibilityState === "visible") syncLiveGiftsCatalog();
   }, 60000);
