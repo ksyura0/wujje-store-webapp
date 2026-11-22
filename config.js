@@ -162,6 +162,45 @@ const API = {
       method,
       promo_code: promoCode
     });
+  },
+
+  /**
+   * Get gifts list
+   */
+  async getGifts() {
+    try {
+      const response = await fetch(`${CONFIG.API_BASE}/api/gifts`, { method: "GET" });
+      if (!response.ok) {
+        console.error(`Gifts fetch error: ${response.status}`);
+        return null;
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to fetch gifts:", error);
+      return null;
+    }
+  },
+
+  /**
+   * Pay with balance for gift
+   */
+  async payGiftWithBalance(initData, target, giftId) {
+    return await this.call("/api/pay_balance", {
+      initData,
+      target,
+      gift_id: giftId
+    });
+  },
+
+  /**
+   * Pay with balance for stars
+   */
+  async payStarsWithBalance(initData, stars, target) {
+    return await this.call("/api/pay_balance", {
+      initData,
+      stars,
+      target
+    });
   }
 };
 

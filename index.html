@@ -1171,10 +1171,35 @@
     }));
 
 
-    const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
-    const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred?.(t); } catch (e) {} };
-    const fmt = (n) => Number(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    // Network status check
+    const isOnline = () => navigator.onLine;
+    window.addEventListener("offline", () => console.warn("No internet connection"));
+    window.addEventListener("online", () => console.log("Connection restored"));
+
+    // Gifts caching (5 min TTL)
+    const GIFTS_CACHE_KEY = "wujje_gifts_cache_v1";
+    const GIFTS_CACHE_TTL = 5 * 60 * 1000;
+
+    async function loadGifts() {
+      // Try cache first
+      const cached = STORAGE.getJSON(GIFTS_CACHE_KEY, null);
+      if (cached && cached.timestamp && Date.now() - cached.timestamp < GIFTS_CACHE_TTL) {
+        return cached.data || [];
+      }
+
+      if (!isOnline()) {
+        console.warn("Offline: using stale cache");
+        return cached?.data || [];
+      }
+
+      const data = await API.getGifts();
+      if (data) {
+        STORAGE.setJSON(GIFTS_CACHE_KEY, { data, timestamp: Date.now() });
+        return data;
+      }
+
+      return cached?.data || [];
+    }
 
     function calcQuote(starsCount) {
       const n = Math.max(1, Number(starsCount) || 50);
@@ -1798,14 +1823,24 @@
       haptic("light");
     });
     document.getElementById("claimRefBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("claimRefBtn");
       const note = document.getElementById("refStatusNote");
-      note.textContent = "Зачисляем...";
+      const wasDisabled = btn.disabled;
+      btn.disabled = true;
+      btn.textContent = "Зачисляем...";
+
       const d = await API.claimReferral(tg?.initData || "");
-      note.textContent = d?.message || (d?.ok ? "Готово!" : "Нет доступного дохода.");
+
       if (d?.ok && typeof d.balance === "number") {
         setRubBalance(d.balance, true);
         await syncReferralInfo();
+        note.textContent = "✅ Доход зачислен!";
+      } else {
+        note.textContent = d?.message || "Нет доступного дохода.";
       }
+
+      btn.disabled = wasDisabled;
+      btn.textContent = "Получить доход";
     });
 
     const topupModal = document.getElementById("topupModal");
@@ -1825,14 +1860,29 @@
     document.getElementById("applyPromoBtn").addEventListener("click", async () => {
       const code = document.getElementById("promoCodeInput").value.trim().toUpperCase();
       const st = document.getElementById("promoStatusText");
-      if (!code || !VALIDATORS.isValidPromoCode(code)) { st.textContent = "Некорректный формат."; st.className = "promo-status err"; return; }
+      const btn = document.getElementById("applyPromoBtn");
+
+      if (!code || !VALIDATORS.isValidPromoCode(code)) {
+        st.textContent = "Некорректный формат.";
+        st.className = "promo-status err";
+        return;
+      }
+
+      btn.disabled = true;
+      st.textContent = "Проверяем...";
+      st.className = "promo-status";
+
       const d = await API.applyPromoCode(tg?.initData || "", code);
+
       st.textContent = d?.message || (d?.ok ? "Промокод применён!" : "Не найден.");
       st.className = `promo-status ${d?.ok ? "ok" : "err"}`;
+
       if (d?.ok) {
         appliedPromo = { code, bonus_percent: d.bonus_percent || 10 };
         STORAGE.setJSON(CONFIG.PROMO_KEY, appliedPromo);
       }
+
+      btn.disabled = false;
     });
 
     document.getElementById("refreshBalanceBtn").addEventListener("click", async () => {
@@ -1843,16 +1893,29 @@
     document.getElementById("confirmTopupBtn").addEventListener("click", async () => {
       const amount = Number(topupAmountInput.value);
       const st = document.getElementById("topupStatus");
-      if (!VALIDATORS.isValidRubAmount(amount)) { st.textContent = "Минимум 10 ₽."; return; }
+      const btn = document.getElementById("confirmTopupBtn");
+
+      if (!VALIDATORS.isValidRubAmount(amount)) {
+        st.textContent = "Минимум 10 ₽.";
+        return;
+      }
+
+      btn.disabled = true;
       st.textContent = "Готовим QR-код...";
+
       const d = await API.requestTopup(tg?.initData || "", amount, "СБП / QR", appliedPromo?.code || null);
+
       if (d?.ok) {
         st.textContent = "";
         document.getElementById("topupQrMeta").innerHTML = `Заявка <b>#${d.topup_id}</b> · Сумма: <b>${fmt(amount)} ₽</b>`;
         document.getElementById("topupQrImg").src = `${CONFIG.API_BASE}/api/sbp_qr.png?t=${Date.now()}`;
         document.getElementById("topupPayLink").href = d.pay_url || CONFIG.DEFAULT_PAY_URL;
         document.getElementById("topupQrBox").classList.add("open");
-      } else st.textContent = "Открой приложение внутри Telegram.";
+      } else {
+        st.textContent = !isOnline() ? "Нет интернета." : "Открой приложение внутри Telegram.";
+      }
+
+      btn.disabled = false;
     });
 
     const payModal = document.getElementById("payModal");
@@ -2061,15 +2124,9 @@
   }
 
   async function syncLiveGiftsCatalog() {
-    try {
-      const res = await fetch(`${API_BASE}/api/gifts`, { method: "GET" });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data?.ok && Array.isArray(data.items)) {
-        mergeLiveGiftsIntoCatalog(data.items);
-      }
-    } catch (e) {
-      // Тихо остаёмся на локальном каталоге и SVG-фолбэке при недоступности API
+    const data = await API.getGifts();
+    if (data?.ok && Array.isArray(data.items)) {
+      mergeLiveGiftsIntoCatalog(data.items);
     }
   }
 
@@ -2215,85 +2272,60 @@
       const giftId = String(currentCheckoutItem?.giftId || "").trim();
       if (giftId && tg?.initData) {
         st.textContent = "Проверяем наличие и списываем баланс...";
-        try {
-          const res = await fetch(`${API_BASE}/api/pay_balance`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              initData: tg.initData,
-              target: recipient,
-              gift_id: giftId
-            })
+        const d = await API.payGiftWithBalance(tg.initData, recipient, giftId);
+
+        if (d?.ok) {
+          if (typeof d.balance === "number") setRubBalance(d.balance, true);
+          else setRubBalance(rubBalance - rub, true);
+          saveOrder({
+            id: d.order_id || ("ord_" + Date.now()),
+            itemLabel: currentCheckoutItem.label,
+            target: recipient,
+            rubAmount: rub,
+            priceLabel: `${fmt(rub)} ₽`,
+            method: "Баланс ₽",
+            statusText: "Оплачен",
+            dateText: new Date().toLocaleString("ru-RU")
           });
-          const d = await res.json();
-          if (d?.ok) {
-            if (typeof d.balance === "number") setRubBalance(d.balance, true);
-            else setRubBalance(rubBalance - rub, true);
-            saveOrder({
-              id: d.order_id || ("ord_" + Date.now()),
-              itemLabel: currentCheckoutItem.label,
-              target: recipient,
-              rubAmount: rub,
-              priceLabel: `${fmt(rub)} ₽`,
-              method: "Баланс ₽",
-              statusText: "Оплачен",
-              dateText: new Date().toLocaleString("ru-RU")
-            });
-            payModal.classList.remove("open");
-            st.textContent = "";
-            syncLiveGiftsCatalog();
-            return;
-          }
-          if (d?.error === "gift_sold_out") {
-            st.textContent = "Этот подарок уже забрали — обновляем каталог.";
-            syncLiveGiftsCatalog();
-            return;
-          }
-          if (d?.error === "insufficient_funds") {
-            st.textContent = "Недостаточно средств на балансе.";
-            return;
-          }
-          st.textContent = d?.error || "Ошибка оплаты подарка.";
-          return;
-        } catch (e) {
-          st.textContent = "Нет связи с сервером.";
+          payModal.classList.remove("open");
+          st.textContent = "";
+          syncLiveGiftsCatalog();
           return;
         }
+        if (d?.error === "gift_sold_out") {
+          st.textContent = "Этот подарок уже забрали — обновляем каталог.";
+          syncLiveGiftsCatalog();
+          return;
+        }
+        if (d?.error === "insufficient_funds") {
+          st.textContent = "Недостаточно средств на балансе.";
+          return;
+        }
+        st.textContent = d?.error || (isOnline() ? "Ошибка оплаты подарка." : "Нет интернета.");
+        return;
       }
 
       if (checkoutMode === "stars" && resolvedRecipient) {
         st.textContent = "Проводим оплату...";
-        try {
-          const res = await fetch(`${API_BASE}/api/pay_balance`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              initData: tg?.initData || "",
-              stars: selectedPackage.stars,
-              target: recipient
-            })
+        const d = await API.payStarsWithBalance(tg?.initData || "", selectedPackage.stars, recipient);
+
+        if (d?.ok) {
+          setRubBalance(d.balance, true);
+          saveOrder({
+            id: d.order_id,
+            stars: selectedPackage.stars,
+            itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`,
+            target: recipient,
+            rubAmount: rub,
+            priceLabel: `${fmt(rub)} ₽`,
+            method: "Баланс ₽",
+            statusText: "Оплачен",
+            dateText: new Date().toLocaleString("ru-RU")
           });
-          const d = await res.json();
-          if (d.ok) {
-            setRubBalance(d.balance, true);
-            saveOrder({
-              id: d.order_id,
-              stars: selectedPackage.stars,
-              itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`,
-              target: recipient,
-              rubAmount: rub,
-              priceLabel: `${fmt(rub)} ₽`,
-              method: "Баланс ₽",
-              statusText: "Оплачен",
-              dateText: new Date().toLocaleString("ru-RU")
-            });
-            payModal.classList.remove("open");
-            document.getElementById("statusNote").textContent = `✅ Заказ #${d.order_id} оплачен!`;
-          } else {
-            st.textContent = "Ошибка оплаты.";
-          }
-        } catch (e) {
-          st.textContent = "Нет связи с сервером.";
+          payModal.classList.remove("open");
+          document.getElementById("statusNote").textContent = `✅ Заказ #${d.order_id} оплачен!`;
+        } else {
+          st.textContent = isOnline() ? "Ошибка оплаты." : "Нет интернета.";
         }
         return;
       }
