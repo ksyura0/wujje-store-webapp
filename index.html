@@ -504,6 +504,7 @@
     }
     .theme-option.active { border-color: var(--accent); background: var(--accent-soft); }
     .theme-swatch { width: 28px; height: 28px; border-radius: 10px; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.25); }
+    .theme-icon { font-size: 20px; display: flex; align-items: center; justify-content: center; }
     .theme-name { font-size: 12.5px; font-weight: 800; }
     .theme-tag { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
 
@@ -1049,10 +1050,10 @@
     }
 
     const THEMES = [
-      { id: "violet", name: "Cyber Violet", tag: "Неон · Игровой", swatch: "linear-gradient(135deg,#a855f7,#4c1d95)" },
-      { id: "sapphire", name: "Midnight Sapphire", tag: "Глубокий синий", swatch: "linear-gradient(135deg,#38bdf8,#1e3a8a)" },
-      { id: "emerald", name: "Carbon Emerald", tag: "Изумруд · Крипто", swatch: "linear-gradient(135deg,#10b981,#064e3b)" },
-      { id: "ice", name: "Ice Glass", tag: "Светлая тема", swatch: "linear-gradient(135deg,#ffffff,#93c5fd)" }
+      { id: "violet", name: "Cyber Violet", tag: "Неон · Игровой", swatch: "linear-gradient(135deg,#a855f7,#4c1d95)", icon: "⚡" },
+      { id: "sapphire", name: "Midnight Sapphire", tag: "Глубокий синий", swatch: "linear-gradient(135deg,#38bdf8,#1e3a8a)", icon: "🌙" },
+      { id: "emerald", name: "Carbon Emerald", tag: "Изумруд · Крипто", swatch: "linear-gradient(135deg,#10b981,#064e3b)", icon: "💎" },
+      { id: "ice", name: "Ice Glass", tag: "Светлая тема", swatch: "linear-gradient(135deg,#ffffff,#93c5fd)", icon: "❄️" }
     ];
 
     const PACKAGES = [
@@ -1299,6 +1300,7 @@
         <button type="button" class="theme-option ${currentTheme === t.id ? "active" : ""}" data-theme-id="${t.id}">
           <span class="theme-swatch" style="background:${t.swatch}"></span>
           <div>
+            <div class="theme-icon">${t.icon}</div>
             <div class="theme-name">${t.name}</div>
             <div class="theme-tag">${t.tag}</div>
           </div>
