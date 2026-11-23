@@ -1,0 +1,1 @@
+- [Wujje Deployment Ready](deployment-status.md) — API + Bot + Tests all complete
