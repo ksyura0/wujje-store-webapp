@@ -2035,33 +2035,6 @@
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
 
-    window.addEventListener("load", async () => {
-      window.debugLog("📍 window.load fired");
-      // Wait for config.js and API to be ready
-      let attempts = 0;
-      while (!window.CONFIG && attempts < 30) {
-        await new Promise(r => setTimeout(r, 100));
-        attempts++;
-      }
-      window.debugLog("✓ CONFIG ready (" + attempts + " attempts)");
-
-      // Wait for app initialization
-      let initAttempts = 0;
-      while (!window.APP_INITIALIZED && initAttempts < 50) {
-        await new Promise(r => setTimeout(r, 100));
-        initAttempts++;
-      }
-      window.debugLog("✓ APP_INITIALIZED (" + initAttempts + " attempts)");
-
-      setTimeout(() => {
-        window.debugLog("🎉 Hiding splash...");
-        document.getElementById("splash")?.classList.add("hide");
-        document.getElementById("app")?.classList.add("app-ready");
-        if (!localStorage.getItem(THEME_KEY)) {
-          setTimeout(() => themeSheet.classList.add("open"), 380);
-        }
-      }, 650);
-    });
   </script>
   <script>
 (function () {
@@ -2390,6 +2363,21 @@
   window.debugLog("✓ syncLiveGiftsCatalog() called");
   window.APP_INITIALIZED = true;
   window.debugLog("✓ APP_INITIALIZED = true");
+
+  // Hide splash screen immediately (don't wait for window.load)
+  setTimeout(() => {
+    window.debugLog("🎉 Hiding splash...");
+    document.getElementById("splash")?.classList.add("hide");
+    document.getElementById("app")?.classList.add("app-ready");
+
+    if (!localStorage.getItem(THEME_KEY)) {
+      setTimeout(() => {
+        const themeSheet = document.getElementById("themeSheet");
+        if (themeSheet) themeSheet.classList.add("open");
+      }, 380);
+    }
+  }, 300);
+
   setInterval(() => {
     if (document.visibilityState === "visible") syncLiveGiftsCatalog();
   }, 60000);
