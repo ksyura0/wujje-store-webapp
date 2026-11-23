@@ -504,7 +504,6 @@
     }
     .theme-option.active { border-color: var(--accent); background: var(--accent-soft); }
     .theme-swatch { width: 28px; height: 28px; border-radius: 10px; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.25); }
-    .theme-logo { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; }
     .theme-icon { font-size: 20px; display: flex; align-items: center; justify-content: center; }
     .theme-name { font-size: 12.5px; font-weight: 800; }
     .theme-tag { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
@@ -620,7 +619,6 @@
     </div>
 
     <div class="wallet-bar">
-      <div id="tonBalanceDisplay" style="display: none; margin-right: 10px; padding: 8px 12px; border-radius: 12px; background: var(--accent-soft); font-size: 13px; font-weight: 700; color: var(--accent);"></div>
       <div id="ton-connect-btn"></div>
     </div>
 
@@ -827,6 +825,7 @@
         </div>
         <div class="stats-grid">
           <div class="stat-box"><div class="stat-label">Баланс</div><div id="profileBalanceVal" class="stat-val">0 ₽</div></div>
+          <div class="stat-box"><div class="stat-label">TON</div><div id="profileTonBalanceVal" class="stat-val">-</div></div>
           <div class="stat-box"><div class="stat-label">Потрачено</div><div id="profileSpentVal" class="stat-val">0 ₽</div></div>
           <div class="stat-box"><div class="stat-label">Куплено Stars</div><div id="profileStarsVal" class="stat-val">0 ⭐</div></div>
           <div class="stat-box"><div class="stat-label">Заказов</div><div id="profileOrdersVal" class="stat-val">0</div></div>
@@ -861,25 +860,6 @@
           <span id="achCounterText" class="field-label">0 / 5</span>
         </div>
         <div id="achievementsGrid" class="ach-grid"></div>
-      </div>
-    </section>
-
-    <section id="screen-web3" class="screen">
-      <div class="glass-card">
-        <div class="field-top">
-          <span class="field-label">💎 Web3 · Последние транзакции</span>
-        </div>
-        <div id="web3TxList" style="font-size: 12.5px; color: var(--muted); text-align: center; padding: 20px; opacity: 0.6;">Нет транзакций</div>
-      </div>
-      <div class="glass-card" style="margin-top: 15px;">
-        <div class="field-top">
-          <span class="field-label">📊 Статус кошелька</span>
-        </div>
-        <div id="web3WalletInfo" style="padding: 12px; font-size: 12.5px; line-height: 1.6; color: var(--text);">
-          <div>🔌 Статус: <span id="web3Status" style="font-weight: 700; color: var(--muted);">Не подключен</span></div>
-          <div style="margin-top: 8px;">🏦 Баланс: <span id="web3Balance" style="font-weight: 700;">-</span></div>
-          <div style="margin-top: 8px;">💹 Курс TON: <span id="web3Rate" style="font-weight: 700; color: var(--accent);">-</span></div>
-        </div>
       </div>
     </section>
 
@@ -928,10 +908,6 @@
       <span id="dockOrdersBadge" class="dock-badge">0</span>
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Заказы</span>
-    </button>
-    <button class="dock-btn" type="button" data-tab="web3">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-      <span>Web3</span>
     </button>
     <button class="dock-btn" type="button" data-tab="profile">
       <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -1381,17 +1357,13 @@
     }
 
     function updateTonBalanceDisplay() {
-      const balanceEl = document.getElementById("tonBalanceDisplay");
+      // Update profile balance display if on that tab
+      const balanceEl = document.getElementById("profileTonBalanceVal");
       if (!balanceEl) return;
-      if (!tonConnectUI.wallet) {
-        balanceEl.style.display = "none";
-        return;
-      }
-      balanceEl.style.display = "block";
       if (tonBalance !== null) {
-        balanceEl.innerHTML = `💎 <strong>${tonBalance.toFixed(4)}</strong> TON`;
-      } else {
-        balanceEl.innerHTML = `💎 <span style="opacity: 0.5;">Загрузка...</span>`;
+        balanceEl.textContent = `${tonBalance.toFixed(4)} TON`;
+      } else if (tonConnectUI.wallet) {
+        balanceEl.textContent = "Загрузка...";
       }
     }
 
@@ -1417,13 +1389,21 @@
       currentTheme = THEMES.some((t) => t.id === themeId) ? themeId : "violet";
       document.documentElement.setAttribute("data-theme", currentTheme);
       if (save) localStorage.setItem(CONFIG.THEME_KEY, currentTheme);
+
+      // Update brandMark logo with theme-specific W5 image
+      const themeData = THEMES.find(t => t.id === currentTheme);
+      if (themeData?.logo) {
+        const mark = document.getElementById("brandMark");
+        mark.innerHTML = `<img src="${themeData.logo}" alt="W" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.parentElement.textContent='W'">`;
+      }
+
       renderThemePickers();
     }
 
     function renderThemePickers() {
       const html = THEMES.map((t) => `
         <button type="button" class="theme-option ${currentTheme === t.id ? "active" : ""}" data-theme-id="${t.id}">
-          <img src="${t.logo}" alt="${t.name}" class="theme-logo" />
+          <span class="theme-swatch" style="background:${t.swatch}"></span>
           <div>
             <div class="theme-icon">${t.icon}</div>
             <div class="theme-name">${t.name}</div>
@@ -1488,7 +1468,6 @@
         const tab = btn.dataset.tab;
         if (tab === "hub") switchScreen("hub", "Wujje Store", "Выдача 24/7 · В наличии");
         if (tab === "orders") { renderOrders(); switchScreen("orders", "Мои заказы", "История покупок"); }
-        if (tab === "web3") { renderWeb3Info(); switchScreen("web3", "Web3 · TON", "Баланс и история"); }
         if (tab === "profile") { renderProfile(); syncReferralInfo(); switchScreen("profile", "Профиль", "Ранги, темы и рефералка"); }
         if (tab === "faq") switchScreen("faq", "Вопросы и ответы", "Поддержка и оферта");
       });
@@ -2002,6 +1981,7 @@
       orders.forEach((o) => { spentRub += Number(o.rubAmount || 0); totalStars += Number(o.stars || 0); });
 
       document.getElementById("profileBalanceVal").textContent = `${fmt(rubBalance)} ₽`;
+      document.getElementById("profileTonBalanceVal").textContent = tonBalance !== null ? `${tonBalance.toFixed(4)} TON` : (tonConnectUI.wallet ? "Загрузка..." : "Не подключен");
       document.getElementById("profileSpentVal").textContent = `${fmt(spentRub)} ₽`;
       document.getElementById("profileStarsVal").textContent = `${fmt(totalStars)} ⭐`;
       document.getElementById("profileOrdersVal").textContent = String(orders.length);
