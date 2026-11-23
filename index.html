@@ -1000,6 +1000,31 @@
     window.debugLog("✓ config.js loaded");
   </script>
   <script>
+    // Core utilities - MUST be defined before any other code
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    // Format number with thousands separator
+    const fmt = (n) => Number(n || 0).toLocaleString("ru-RU");
+
+    // Haptic feedback
+    const haptic = (style = "light") => {
+      try {
+        if (tg?.HapticFeedback) {
+          if (style === "light") tg.HapticFeedback.impactOccurred("light");
+          else if (style === "medium") tg.HapticFeedback.impactOccurred("medium");
+          else if (style === "heavy") tg.HapticFeedback.impactOccurred("heavy");
+        }
+      } catch (e) {
+        console.warn("Haptic feedback failed:", e);
+      }
+    };
+
+    window.debugLog("✓ Core utilities (tg, fmt, haptic) initialized");
+
     const tonFloorToRub = (ton) => Math.max(150, Math.round(Number(ton) * CONFIG.TON_RATE_RUB * CONFIG.SAFE_MARKUP));
     const rubToTonSafe = (rub) => Math.max(0.05, Number((Number(rub) / CONFIG.TON_RATE_RUB).toFixed(2)));
 
