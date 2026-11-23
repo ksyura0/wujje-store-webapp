@@ -976,20 +976,23 @@
     </div>
   </div>
   <script>
-    // Debug logging for Telegram WebApp
-    function debugLog(msg) {
-      const el = document.getElementById("splash-debug");
-      if (el) {
-        el.textContent += (el.textContent ? "\n" : "") + msg;
-      }
-      console.log(msg);
-    }
-    debugLog("Loading config.js...");
-    window.debugLog = debugLog;
+    // Debug logging for Telegram WebApp - MUST run first
+    window.debugLog = function(msg) {
+      try {
+        const el = document.getElementById("splash-debug");
+        if (el) {
+          el.textContent += (el.textContent ? "\n" : "") + msg;
+        }
+      } catch (e) {}
+      console.log("[Wujje Debug]", msg);
+    };
+
+    // Start logging immediately
+    setTimeout(() => window.debugLog("🚀 App starting..."), 100);
   </script>
   <script src="./config.js"></script>
   <script>
-    debugLog("Config loaded: " + (typeof CONFIG !== "undefined" ? "✓" : "✗"));
+    window.debugLog("✓ config.js loaded");
   </script>
   <script>
     const tonFloorToRub = (ton) => Math.max(150, Math.round(Number(ton) * CONFIG.TON_RATE_RUB * CONFIG.SAFE_MARKUP));
@@ -2033,14 +2036,14 @@
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
 
     window.addEventListener("load", async () => {
-      debugLog("window.load fired");
+      window.debugLog("📍 window.load fired");
       // Wait for config.js and API to be ready
       let attempts = 0;
       while (!window.CONFIG && attempts < 30) {
         await new Promise(r => setTimeout(r, 100));
         attempts++;
       }
-      debugLog("CONFIG ready after " + attempts + " attempts");
+      window.debugLog("✓ CONFIG ready (" + attempts + " attempts)");
 
       // Wait for app initialization
       let initAttempts = 0;
@@ -2048,10 +2051,10 @@
         await new Promise(r => setTimeout(r, 100));
         initAttempts++;
       }
-      debugLog("APP_INITIALIZED after " + initAttempts + " attempts");
+      window.debugLog("✓ APP_INITIALIZED (" + initAttempts + " attempts)");
 
       setTimeout(() => {
-        debugLog("Hiding splash screen...");
+        window.debugLog("🎉 Hiding splash...");
         document.getElementById("splash")?.classList.add("hide");
         document.getElementById("app")?.classList.add("app-ready");
         if (!localStorage.getItem(THEME_KEY)) {
@@ -2384,9 +2387,9 @@
   }
 
   syncLiveGiftsCatalog();
-  debugLog("syncLiveGiftsCatalog() called");
-  window.APP_INITIALIZED = true;  // Signal that app is ready to display
-  debugLog("APP_INITIALIZED = true");
+  window.debugLog("✓ syncLiveGiftsCatalog() called");
+  window.APP_INITIALIZED = true;
+  window.debugLog("✓ APP_INITIALIZED = true");
   setInterval(() => {
     if (document.visibilityState === "visible") syncLiveGiftsCatalog();
   }, 60000);
