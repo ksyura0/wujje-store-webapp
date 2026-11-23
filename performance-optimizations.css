@@ -1,0 +1,186 @@
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS CSS
+   Оптимизации для слабых Android устройств
+   ============================================ */
+
+/* 1. LOW-END MODE - упрощенные стили */
+.low-end-mode * {
+  /* Отключаем сложные эффекты */
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.low-end-mode .modal,
+.low-end-mode .sheet {
+  /* Простые переходы вместо сложных анимаций */
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+.low-end-mode .gradient-bg {
+  /* Убираем градиенты */
+  background: var(--bg-primary) !important;
+}
+
+/* 2. HARDWARE ACCELERATION */
+.modal,
+.sheet,
+.card,
+.nft-card {
+  /* Используем GPU для плавных анимаций */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 3. OPTIMIZED TRANSITIONS */
+.card,
+.btn,
+.nft-card {
+  /* Только transform и opacity - самые быстрые свойства */
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.card:active,
+.btn:active,
+.nft-card:active {
+  transform: scale(0.98) translateZ(0);
+}
+
+/* 4. LAZY LOADING PLACEHOLDER */
+img[data-src] {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  min-height: 100px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Убираем shimmer на low-end устройствах */
+.low-end-mode img[data-src] {
+  animation: none;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 5. СОДЕРЖАНИЕ С ВЫСОКОЙ ПРИОРИТЕТНОСТЬЮ */
+.hero,
+.category-card,
+.nft-card-visible {
+  /* Подсказываем браузеру, что будут изменения */
+  will-change: transform;
+}
+
+/* Убираем will-change после анимации (делается через JS) */
+.hero.animated,
+.category-card.animated {
+  will-change: auto;
+}
+
+/* 6. REDUCED MOTION для пользователей с настройками accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 7. ОПТИМИЗАЦИЯ ШРИФТОВ */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap; /* Показываем fallback шрифт сразу */
+  src: local('Inter'), local('Inter-Regular');
+}
+
+/* 8. ВИРТУАЛЬНЫЙ СПИСОК */
+.virtual-list-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+  position: relative;
+}
+
+.virtual-list-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+/* 9. ОПТИМИЗАЦИЯ ИЗОБРАЖЕНИЙ */
+img {
+  /* Улучшаем производительность декодирования */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.nft-img,
+.gift-img {
+  /* Асинхронное декодирование изображений */
+  content-visibility: auto; /* Рендерим только видимое */
+}
+
+/* 10. CONTAIN для изолированных блоков */
+.card,
+.modal,
+.sheet,
+.category-card {
+  /* Изолируем layout и paint для лучшей производительности */
+  contain: layout style paint;
+}
+
+/* 11. ОПТИМИЗАЦИЯ ДЛЯ МАЛЕНЬКИХ ЭКРАНОВ */
+@media (max-width: 480px) {
+  /* Уменьшаем сложность на маленьких экранах */
+  .gradient-bg {
+    background: var(--bg-primary);
+  }
+
+  .card,
+  .modal,
+  .sheet {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* 12. СКРЫТИЕ ОФФСКРИН КОНТЕНТА */
+.offscreen {
+  content-visibility: hidden;
+}
+
+/* 13. ОПТИМИЗАЦИЯ СКРОЛЛА */
+.scroll-container {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 14. БАТЧ АНИМАЦИИ */
+.batch-animate {
+  animation-delay: calc(var(--animation-order) * 50ms);
+}
+
+/* 15. НИЗКОЕ КАЧЕСТВО НА МЕДЛЕННОМ СОЕДИНЕНИИ */
+@media (prefers-reduced-data: reduce) {
+  img {
+    /* Загружаем изображения в низком качестве */
+    image-rendering: pixelated;
+  }
+
+  .gradient-bg,
+  .modal-backdrop {
+    background: var(--bg-primary) !important;
+  }
+}

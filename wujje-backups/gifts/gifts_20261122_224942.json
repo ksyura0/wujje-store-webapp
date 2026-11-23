@@ -1,0 +1,35 @@
+{
+  "updated_at": 1795376851,
+  "items": [
+    {
+      "id": "telegram_nft_1",
+      "title": "Snoop Dogg",
+      "floorTon": 50.0,
+      "description": "Official Telegram NFT",
+      "image": "https://example.com/snoop.jpg",
+      "floorRub": 4302.69,
+      "markupPercent": 7.5,
+      "updatedAt": "2026-11-22T22:47:31.117144"
+    },
+    {
+      "id": "telegram_nft_2",
+      "title": "Telegram Hearts",
+      "floorTon": 30.0,
+      "description": "Limited edition hearts",
+      "image": "https://example.com/hearts.jpg",
+      "floorRub": 2581.61,
+      "markupPercent": 7.5,
+      "updatedAt": "2026-11-22T22:47:31.117153"
+    },
+    {
+      "id": "telegram_nft_3",
+      "title": "Telegram Stars",
+      "floorTon": 100.0,
+      "description": "Exclusive stars collection",
+      "image": "https://example.com/stars.jpg",
+      "floorRub": 8605.38,
+      "markupPercent": 7.5,
+      "updatedAt": "2026-11-22T22:47:31.117156"
+    }
+  ]
+}

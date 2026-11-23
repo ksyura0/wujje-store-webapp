@@ -1,0 +1,60 @@
+{
+  "updated_at": 1795377205,
+  "items": [
+    {
+      "id": "snoop_dogg",
+      "title": "Snoop Dogg",
+      "floorTon": 50.0,
+      "description": "Official Telegram NFT",
+      "image": "",
+      "source": "fallback",
+      "floorRub": 4303.23,
+      "markupPercent": 7.5,
+      "updatedAt": "2026-11-22T22:53:25.899351"
+    },
+    {
+      "id": "telegram_hearts",
+      "title": "Telegram Hearts",
+      "floorTon": 30.0,
+      "description": "Telegram exclusive collection",
+      "image": "",
+      "source": "fallback",
+      "floorRub": 2581.93,
+      "markupPercent": 7.5,
+      "updatedAt": "2026-11-22T22:53:25.899360"
+    },
+    {
+      "id": "telegram_stars",
+      "title": "Telegram Stars",
+      "floorTon": 100.0,
+      "description": "Limited stars collection",
+      "image": "",
+      "source": "fallback",
+      "floorRub": 8606.45,
+      "markupPercent": 7.5,
+      "updatedAt": "2026-11-22T22:53:25.899364"
+    },
+    {
+      "id": "telegram_cats",
+      "title": "Telegram Cats",
+      "floorTon": 25.0,
+      "description": "Adorable cat NFTs",
+      "image": "",
+      "source": "fallback",
+      "floorRub": 2151.61,
+      "markupPercent": 7.5,
+      "updatedAt": "2026-11-22T22:53:25.899366"
+    },
+    {
+      "id": "telegram_dogs",
+      "title": "Telegram Dogs",
+      "floorTon": 20.0,
+      "description": "Popular dog collection",
+      "image": "",
+      "source": "fallback",
+      "floorRub": 1721.29,
+      "markupPercent": 7.5,
+      "updatedAt": "2026-11-22T22:53:25.899368"
+    }
+  ]
+}
