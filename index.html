@@ -1232,8 +1232,8 @@
 
     // Network status check
     const isOnline = () => navigator.onLine;
-    window.addEventListener("offline", () => console.warn("No internet connection"));
-    window.addEventListener("online", () => console.log("Connection restored"));
+    window.addEventListener("offline", () => {});
+    window.addEventListener("online", () => {});
 
     // Gifts caching (5 min TTL)
     const GIFTS_CACHE_KEY = "wujje_gifts_cache_v1";
@@ -2528,7 +2528,6 @@
   const perfScript = document.createElement('script');
   perfScript.src = 'performance-optimizations.js';
   perfScript.onload = () => {
-    console.log('⚡ Performance optimizations loaded');
 
     // Инициализируем оптимизации
     if (window.perfOptimizations) {
@@ -2536,10 +2535,8 @@
 
       // Определяем тип устройства
       const isLowEnd = window.perfOptimizations.isLowEndDevice();
-      console.log(`📱 Device type: ${isLowEnd ? 'Low-end' : 'High-end'}`);
 
       if (isLowEnd) {
-        console.log('🔧 Enabling adaptive quality mode');
 
         // Заменяем svgArt на упрощенную версию
         const originalSvgArt = window.svgArt;

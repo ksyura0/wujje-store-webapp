@@ -90,14 +90,12 @@ const API = {
       });
 
       if (!response.ok) {
-        console.error(`API Error: ${response.status} ${response.statusText}`);
         return null;
       }
 
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error(`API Call Failed (${endpoint}):`, error);
       return null;
     }
   },
@@ -171,12 +169,10 @@ const API = {
     try {
       const response = await fetch(`${CONFIG.API_BASE}/api/gifts`, { method: "GET" });
       if (!response.ok) {
-        console.error(`Gifts fetch error: ${response.status}`);
         return null;
       }
       return await response.json();
     } catch (error) {
-      console.error("Failed to fetch gifts:", error);
       return null;
     }
   },
@@ -216,7 +212,6 @@ const STORAGE = {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : defaultValue;
     } catch (error) {
-      console.error(`Storage Parse Error (${key}):`, error);
       return defaultValue;
     }
   },
@@ -229,7 +224,6 @@ const STORAGE = {
       localStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch (error) {
-      console.error(`Storage Save Error (${key}):`, error);
       return false;
     }
   },
@@ -258,7 +252,6 @@ const STORAGE = {
       localStorage.removeItem(CONFIG.ORDERS_KEY);
       return true;
     } catch (error) {
-      console.error("Failed to clear orders:", error);
       return false;
     }
   },

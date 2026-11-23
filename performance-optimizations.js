@@ -216,8 +216,6 @@ function setupAdaptiveQuality() {
   const lowEnd = isLowEndDevice();
 
   if (lowEnd) {
-    console.log('🔧 Low-end device detected, enabling performance mode');
-
     // Отключаем сложные анимации
     document.documentElement.classList.add('low-end-mode');
 
@@ -238,8 +236,6 @@ function setupAdaptiveQuality() {
 // ============================================
 
 function initPerformanceOptimizations() {
-  console.log('⚡ Initializing performance optimizations...');
-
   // 1. Определяем тип устройства
   setupAdaptiveQuality();
 
@@ -255,8 +251,6 @@ function initPerformanceOptimizations() {
     const originalHandler = searchInput.oninput;
     searchInput.oninput = debounce(originalHandler, 300);
   }
-
-  console.log('✅ Performance optimizations active');
 }
 
 // Экспортируем для использования в index.html
