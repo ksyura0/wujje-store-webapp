@@ -2077,7 +2077,7 @@
       return raw;
     }
     if (raw.startsWith("/")) {
-      return `${API_BASE}${raw}`;
+      return `${CONFIG.API_BASE}${raw}`;
     }
     return raw;
   }
