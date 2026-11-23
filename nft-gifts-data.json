@@ -1,0 +1,176 @@
+{
+  "updated_at": "2026-11-23 09:30:00",
+  "total_gifts": 10,
+  "gifts": [
+    {
+      "id": "delicious-cake",
+      "title": "Delicious Cake",
+      "floor_ton": 395.0,
+      "floor_rub": 71100.0,
+      "total_supply": 1000,
+      "available": true,
+      "rarity": "common",
+      "image_url": "https://cdn.tonviewer.com/gifts/delicious-cake.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/delicious-cake",
+      "attributes": {
+        "background": "#FFE5B4",
+        "pattern": "gradient",
+        "symbol": "🎂"
+      }
+    },
+    {
+      "id": "green-star",
+      "title": "Green Star",
+      "floor_ton": 425.0,
+      "floor_rub": 76500.0,
+      "total_supply": 1000,
+      "available": true,
+      "rarity": "uncommon",
+      "image_url": "https://cdn.tonviewer.com/gifts/green-star.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/green-star",
+      "attributes": {
+        "background": "#4CAF50",
+        "pattern": "stars",
+        "symbol": "⭐"
+      }
+    },
+    {
+      "id": "blue-star",
+      "title": "Blue Star",
+      "floor_ton": 445.0,
+      "floor_rub": 80100.0,
+      "total_supply": 1000,
+      "available": true,
+      "rarity": "uncommon",
+      "image_url": "https://cdn.tonviewer.com/gifts/blue-star.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/blue-star",
+      "attributes": {
+        "background": "#2196F3",
+        "pattern": "stars",
+        "symbol": "⭐"
+      }
+    },
+    {
+      "id": "red-star",
+      "title": "Red Star",
+      "floor_ton": 450.0,
+      "floor_rub": 81000.0,
+      "total_supply": 1000,
+      "available": true,
+      "rarity": "rare",
+      "image_url": "https://cdn.tonviewer.com/gifts/red-star.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/red-star",
+      "attributes": {
+        "background": "#F44336",
+        "pattern": "stars",
+        "symbol": "⭐"
+      }
+    },
+    {
+      "id": "chill-flame",
+      "title": "Chill Flame",
+      "floor_ton": 820.0,
+      "floor_rub": 147600.0,
+      "total_supply": 500,
+      "available": true,
+      "rarity": "rare",
+      "image_url": "https://cdn.tonviewer.com/gifts/chill-flame.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/chill-flame",
+      "attributes": {
+        "background": "#00BCD4",
+        "pattern": "fire",
+        "symbol": "🔥"
+      }
+    },
+    {
+      "id": "cosmic-penguin",
+      "title": "Cosmic Penguin",
+      "floor_ton": 1150.0,
+      "floor_rub": 207000.0,
+      "total_supply": 300,
+      "available": true,
+      "rarity": "epic",
+      "image_url": "https://cdn.tonviewer.com/gifts/cosmic-penguin.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/cosmic-penguin",
+      "attributes": {
+        "background": "#673AB7",
+        "pattern": "galaxy",
+        "symbol": "🐧"
+      }
+    },
+    {
+      "id": "golden-monkey",
+      "title": "Golden Monkey",
+      "floor_ton": 2500.0,
+      "floor_rub": 450000.0,
+      "total_supply": 100,
+      "available": true,
+      "rarity": "legendary",
+      "image_url": "https://cdn.tonviewer.com/gifts/golden-monkey.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/golden-monkey",
+      "attributes": {
+        "background": "#FFD700",
+        "pattern": "metallic",
+        "symbol": "🐵"
+      }
+    },
+    {
+      "id": "ruby-heart",
+      "title": "Ruby Heart",
+      "floor_ton": 1800.0,
+      "floor_rub": 324000.0,
+      "total_supply": 200,
+      "available": true,
+      "rarity": "epic",
+      "image_url": "https://cdn.tonviewer.com/gifts/ruby-heart.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/ruby-heart",
+      "attributes": {
+        "background": "#E91E63",
+        "pattern": "crystals",
+        "symbol": "💎"
+      }
+    },
+    {
+      "id": "emerald-eyes",
+      "title": "Emerald Eyes",
+      "floor_ton": 980.0,
+      "floor_rub": 176400.0,
+      "total_supply": 400,
+      "available": true,
+      "rarity": "rare",
+      "image_url": "https://cdn.tonviewer.com/gifts/emerald-eyes.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/emerald-eyes",
+      "attributes": {
+        "background": "#00C853",
+        "pattern": "geometric",
+        "symbol": "👁️"
+      }
+    },
+    {
+      "id": "midnight-owl",
+      "title": "Midnight Owl",
+      "floor_ton": 1350.0,
+      "floor_rub": 243000.0,
+      "total_supply": 250,
+      "available": true,
+      "rarity": "epic",
+      "image_url": "https://cdn.tonviewer.com/gifts/midnight-owl.webp",
+      "marketplace": "fragment",
+      "marketplace_url": "https://fragment.com/gift/midnight-owl",
+      "attributes": {
+        "background": "#1A237E",
+        "pattern": "feathers",
+        "symbol": "🦉"
+      }
+    }
+  ]
+}

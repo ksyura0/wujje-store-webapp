@@ -1,3 +1,7 @@
 requests==2.31.0
 beautifulsoup4==4.12.2
 lxml==4.9.3
+
+# NFT Gifts Parser
+tg-gifts-sdk>=0.1.0
+aiohttp>=3.9.0
