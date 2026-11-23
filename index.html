@@ -871,6 +871,30 @@
         <div class="faq-q">Как учитывается курс TON / GRAM?</div>
         <div class="faq-a">Расчёт привязан к рублю с учётом текущей просадки TON (~84 ₽) и запасом маржи, чтобы магазин не уходил в минус при колебаниях курса.</div>
       </div>
+      <div class="faq-item">
+        <div class="faq-q">Как пополнить баланс ₽?</div>
+        <div class="faq-a">Перейди в Профиль → Баланс → выбери сумму → оплати через СБП/QR. Деньги поступят мгновенно. Есть промокоды на доп. бонусы.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Почему я вижу "не доступно"?</div>
+        <div class="faq-a">Товар недоступен для твоего региона или достигнут лимит продаж. Подпишись на уведомления, чтобы узнать, когда вернётся.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Как работает реферальная программа?</div>
+        <div class="faq-a">Дай свой реф-ссылку друзьям. С каждой их покупки ты получишь комиссию. Доход можно вывести или потратить на подарки.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Какие способы оплаты доступны?</div>
+        <div class="faq-a">Баланс ₽ (пополнение через СБП/QR), TON кошелек (напрямую из Web3 кошелька) и Telegram Stars.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Это безопасно? Данные куда идут?</div>
+        <div class="faq-a">Мы используем защищённые платёжные каналы. Твой кошелек не раскрывается третьим лицам. Все сделки логируются и могут быть проверены.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Можно ли отменить или вернуть платёж?</div>
+        <div class="faq-a">Платежи необратимы — это особенность криптовалют. Перед отправкой проверь все данные. При ошибке свяжись с поддержкой.</div>
+      </div>
     </section>
   </div>
 
@@ -2398,16 +2422,18 @@
   window.APP_INITIALIZED = true;
   window.debugLog("✓ APP_INITIALIZED = true");
 
-  // Hide splash screen immediately after APP_INITIALIZED = true
-  window.debugLog("🎉 Hiding splash...");
+  // Hide splash screen after 2 seconds
+  window.debugLog("🎉 Hiding splash in 2s...");
   const splash = document.getElementById("splash");
   if (splash) {
-    splash.classList.add("hide");
-    // Remove from DOM after transition
     setTimeout(() => {
-      splash.style.display = "none";
-      splash.remove();
-    }, 500);
+      splash.classList.add("hide");
+      // Remove from DOM after transition
+      setTimeout(() => {
+        splash.style.display = "none";
+        splash.remove();
+      }, 500);
+    }, 2000);
   }
 
   document.getElementById("app")?.classList.add("app-ready");
@@ -2416,7 +2442,7 @@
     setTimeout(() => {
       const themeSheet = document.getElementById("themeSheet");
       if (themeSheet) themeSheet.classList.add("open");
-    }, 380);
+    }, 2380);
   }
 
   setInterval(() => {
