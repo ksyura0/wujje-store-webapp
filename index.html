@@ -2369,28 +2369,26 @@
   window.APP_INITIALIZED = true;
   window.debugLog("✓ APP_INITIALIZED = true");
 
-  // Hide splash screen immediately (don't wait for window.load)
-  setTimeout(() => {
-    window.debugLog("🎉 Hiding splash...");
-    const splash = document.getElementById("splash");
-    if (splash) {
-      splash.classList.add("hide");
-      // Remove from DOM after transition
-      setTimeout(() => {
-        splash.style.display = "none";
-        splash.remove();
-      }, 500);
-    }
+  // Hide splash screen immediately after APP_INITIALIZED = true
+  window.debugLog("🎉 Hiding splash...");
+  const splash = document.getElementById("splash");
+  if (splash) {
+    splash.classList.add("hide");
+    // Remove from DOM after transition
+    setTimeout(() => {
+      splash.style.display = "none";
+      splash.remove();
+    }, 500);
+  }
 
-    document.getElementById("app")?.classList.add("app-ready");
+  document.getElementById("app")?.classList.add("app-ready");
 
-    if (!localStorage.getItem(THEME_KEY)) {
-      setTimeout(() => {
-        const themeSheet = document.getElementById("themeSheet");
-        if (themeSheet) themeSheet.classList.add("open");
-      }, 380);
-    }
-  }, 300);
+  if (!localStorage.getItem(CONFIG.THEME_KEY)) {
+    setTimeout(() => {
+      const themeSheet = document.getElementById("themeSheet");
+      if (themeSheet) themeSheet.classList.add("open");
+    }, 380);
+  }
 
   setInterval(() => {
     if (document.visibilityState === "visible") syncLiveGiftsCatalog();
