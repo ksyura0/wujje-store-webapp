@@ -2067,7 +2067,7 @@
 
   </script>
   <script>
-(function () {
+  // Live gifts catalog integration - runs after main app initialization
   function resolveGiftArtwork(item, fallbackSvg) {
     const raw = String(
       item?.image_url || item?.image || item?.photo || item?.img || ""
@@ -2418,7 +2418,6 @@
   setInterval(() => {
     if (document.visibilityState === "visible") syncLiveGiftsCatalog();
   }, 60000);
-})();
 </script>
 </body>
 </html>
