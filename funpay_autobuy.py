@@ -133,32 +133,44 @@ class FunPayAutoBuy:
             if not self.session:
                 self._init_session()
 
-            response = self.session.get(f"{self.FUNPAY_BASE}/account", timeout=15)
+            response = self.session.get(self.FUNPAY_BASE, timeout=15)
             response.raise_for_status()
 
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            # Look for balance in various possible locations
+            # Try to find balance in span.badge-balance or .user-balance
             balance_text = None
 
-            # Try to find balance in common patterns
-            balance_patterns = [
-                soup.find('div', {'class': re.compile(r'balance|wallet')}),
-                soup.find('span', {'class': re.compile(r'balance|money')}),
-                soup.find('a', {'href': re.compile(r'account|wallet')})
-            ]
+            # Primary: look for span.badge-balance
+            balance_span = soup.find('span', {'class': re.compile(r'badge-balance')})
+            if balance_span:
+                text = balance_span.get_text(strip=True)
+                # Remove spaces inside the number (e.g., "1 250.50" -> "1250.50")
+                text = text.replace(' ', '').replace(',', '.')
+                match = re.search(r'(\d+(?:\.\d{1,2})?)', text)
+                if match:
+                    balance_text = match.group(1)
 
-            for elem in balance_patterns:
-                if elem:
-                    text = elem.get_text()
-                    match = re.search(r'(\d+(?:\.\d{1,2})?)\s*₽', text)
+            # Fallback: look for .user-balance
+            if not balance_text:
+                balance_elem = soup.find('span', {'class': re.compile(r'user-balance|balance')})
+                if balance_elem:
+                    text = balance_elem.get_text(strip=True)
+                    text = text.replace(' ', '').replace(',', '.')
+                    match = re.search(r'(\d+(?:\.\d{1,2})?)', text)
                     if match:
                         balance_text = match.group(1)
-                        break
+
+            # Last resort: search for balance pattern in page
+            if not balance_text:
+                content_text = soup.get_text()
+                match = re.search(r'(\d+(?:\s+\d{3})*(?:[.,]\d{1,2})?)\s*₽', content_text)
+                if match:
+                    balance_text = match.group(1).replace(' ', '').replace(',', '.')
 
             if balance_text:
                 balance = float(balance_text)
-                logger.info(f"📊 FunPay balance: {balance:.2f} ₽")
+                logger.info(f"📊 Current FunPay balance: {balance:.2f} ₽")
                 return balance
             else:
                 logger.warning("⚠️ Could not parse balance from page")
@@ -240,10 +252,6 @@ class FunPayAutoBuy:
                         logger.debug(f"Skipping offer: seller offline")
                         continue
 
-                    if not is_auto:
-                        logger.debug(f"Skipping offer: no auto-delivery")
-                        continue
-
                     if rating < self.MIN_RATING:
                         logger.debug(f"Skipping offer: low rating {rating}")
                         continue
@@ -273,8 +281,8 @@ class FunPayAutoBuy:
                 logger.warning("❌ No valid offers after filtering")
                 return None
 
-            # Sort by price per unit (ascending = cheapest first)
-            valid_offers.sort(key=lambda x: x["price_per_unit"])
+            # Sort by is_auto (True first) then by price per unit (ascending = cheapest first)
+            valid_offers.sort(key=lambda x: (not x["is_auto"], x["price_per_unit"]))
             best_offer = valid_offers[0]
 
             logger.info(f"✅ Best offer found:")
@@ -329,13 +337,19 @@ class FunPayAutoBuy:
             form_data = {}
             for input_field in form.find_all(['input', 'textarea']):
                 name = input_field.get('name')
-                value = input_field.get('value')
+                value = input_field.get('value', '')
                 if name:
                     form_data[name] = value
 
+            # Log hidden fields (csrf_token, offer_id, node_id, location, secrets)
+            hidden_fields = [k for k in form_data.keys() if k not in ['steam_login', 'amount']]
+            if hidden_fields:
+                logger.debug(f"Found hidden form fields: {hidden_fields}")
+
             # Set/override critical fields
             form_data['steam_login'] = steam_login
-            form_data['amount'] = str(amount_rub)
+            form_data['amount'] = str(int(amount_rub))
+            form_data['payment_method'] = 'balance'  # Use FunPay internal balance
             if self.csrf_token:
                 form_data['csrf_token'] = self.csrf_token
 
@@ -389,6 +403,170 @@ class FunPayAutoBuy:
         except Exception as e:
             logger.error(f"❌ Failed to purchase offer: {e}")
             return None
+
+    def handle_order_chat(self, funpay_order_id: str, steam_login: str, timeout_sec: int = 180, max_responses: int = 6) -> Optional[str]:
+        """
+        Monitor order chat and auto-respond to seller bot messages
+
+        Args:
+            funpay_order_id: FunPay order ID (e.g., "123456")
+            steam_login: Steam login to send if requested
+            timeout_sec: Maximum monitoring duration (seconds)
+            max_responses: Maximum auto-responses per order (prevent loops)
+
+        Returns:
+            "completed" if success status detected, None otherwise
+        """
+        try:
+            if not self.session:
+                self._init_session()
+
+            # Parse order ID (remove # if present)
+            order_id = funpay_order_id.lstrip('#')
+            order_url = f"{self.FUNPAY_BASE}/orders/{order_id}/"
+
+            logger.info(f"🤖 Starting order chat monitor: {order_url}")
+
+            processed_message_ids = set()
+            response_count = 0
+            start_time = time.time()
+            poll_interval = 4  # seconds
+
+            while True:
+                # Check timeout
+                elapsed = time.time() - start_time
+                if elapsed > timeout_sec:
+                    logger.info(f"⏰ Order chat monitor timeout ({timeout_sec}s)")
+                    return None
+
+                # Fetch order page
+                try:
+                    response = self.session.get(order_url, timeout=15)
+                    response.raise_for_status()
+                except Exception as e:
+                    logger.debug(f"Failed to fetch order page: {e}")
+                    time.sleep(poll_interval)
+                    continue
+
+                soup = BeautifulSoup(response.content, 'html.parser')
+
+                # Find chat message list
+                chat_list = soup.find('div', {'class': re.compile(r'chat-message-list|messages')})
+                if not chat_list:
+                    logger.debug("Chat list not found on page")
+                    time.sleep(poll_interval)
+                    continue
+
+                # Find all chat messages
+                messages = chat_list.find_all('div', {'class': re.compile(r'chat-msg-item|message-item|msg')})
+
+                for msg in messages:
+                    msg_id = msg.get('data-id') or msg.get('data-message-id')
+                    if not msg_id:
+                        continue
+
+                    # Skip already processed messages
+                    if msg_id in processed_message_ids:
+                        continue
+
+                    processed_message_ids.add(msg_id)
+
+                    msg_text = msg.get_text(separator=' ', strip=True)
+                    sender = msg.get('data-sender') or msg.get('data-from', '').lower()
+
+                    # Ignore own messages
+                    if 'own' in sender or sender == 'me':
+                        logger.debug(f"Ignoring own message: {msg_text[:50]}")
+                        continue
+
+                    logger.info(f"📨 Seller message: {msg_text[:100]}")
+
+                    # Check response limit
+                    if response_count >= max_responses:
+                        logger.warning(f"⚠️ Max responses ({max_responses}) reached, stopping")
+                        return None
+
+                    reply_text = None
+
+                    # Check for login request
+                    if re.search(r'логин|login|ник|укажите|введите|account', msg_text, re.IGNORECASE):
+                        reply_text = steam_login
+                        logger.info(f"→ Sending login: {steam_login}")
+
+                    # Check for confirmation request
+                    elif re.search(r'верно|уверены|подтвердите|правильно|да|нет|\+|confirm|yes', msg_text, re.IGNORECASE):
+                        # Try to find specific command in quotes
+                        cmd_match = re.search(r'[«"\']([^«"\']+)[«"\']', msg_text)
+                        if cmd_match:
+                            reply_text = cmd_match.group(1)
+                            logger.info(f"→ Sending command: {reply_text}")
+                        else:
+                            reply_text = "Да"
+                            logger.info(f"→ Sending confirmation: Да")
+
+                    # Check for region request
+                    elif re.search(r'регион|рф|россия|страна|region|country', msg_text, re.IGNORECASE):
+                        reply_text = "РФ"
+                        logger.info(f"→ Sending region: РФ")
+
+                    # Check for success status
+                    elif re.search(r'успешно|пополнено|выполнено|зачислены|completed|success', msg_text, re.IGNORECASE):
+                        logger.info(f"✅ Order completed detected: {msg_text[:50]}")
+                        return "completed"
+
+                    # Send reply if needed
+                    if reply_text:
+                        if self._send_chat_message(order_id, reply_text):
+                            response_count += 1
+                        else:
+                            logger.warning("Failed to send chat message")
+
+                # Sleep before next poll
+                time.sleep(poll_interval)
+
+        except Exception as e:
+            logger.error(f"❌ Error in order chat handler: {e}")
+            return None
+
+    def _send_chat_message(self, order_id: str, message: str) -> bool:
+        """
+        Send message in order chat via AJAX POST
+
+        Args:
+            order_id: FunPay order ID
+            message: Message text
+
+        Returns:
+            True if sent successfully
+        """
+        try:
+            # Prepare chat message POST data
+            post_data = {
+                'csrf_token': self.csrf_token,
+                'chat_message': message,
+                'node': order_id,
+                'type': 'order'  # Specify it's an order chat
+            }
+
+            # Send message
+            chat_url = f"{self.FUNPAY_BASE}/chat"
+            response = self.session.post(
+                chat_url,
+                data=post_data,
+                timeout=10,
+                headers={'X-Requested-With': 'XMLHttpRequest'}
+            )
+
+            if response.status_code in [200, 201]:
+                logger.debug(f"✅ Chat message sent: {message[:50]}")
+                return True
+            else:
+                logger.warning(f"⚠️ Chat message send failed: {response.status_code}")
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ Failed to send chat message: {e}")
+            return False
 
     def process_steam_order(self, order: Dict) -> Dict:
         """
@@ -459,15 +637,22 @@ class FunPayAutoBuy:
                 result["message"] = "Failed to create FunPay order"
                 return result
 
-            # Step 4: Wait for processing
+            # Step 4: Monitor chat and auto-respond to seller
+            chat_status = self.handle_order_chat(funpay_order_id, steam_login)
+            if chat_status == "completed":
+                result["status"] = "completed"
+                logger.info(f"✅ Order {funpay_order_id} marked as completed by auto-chat handler")
+            else:
+                result["status"] = "pending"
+
+            # Step 5: Wait for processing
             time.sleep(2)
 
-            # Step 5: Final balance
+            # Step 6: Final balance
             balance_after = self.check_balance()
 
             result["success"] = True
             result["funpay_order_id"] = funpay_order_id
-            result["status"] = "pending"  # Initial status
             result["message"] = f"Order created successfully: {funpay_order_id}"
             result["balance_after"] = balance_after
 
