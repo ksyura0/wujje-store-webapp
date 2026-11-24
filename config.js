@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Wujje Store Configuration & Utilities
  * Contains constants, validators, and helper functions
  */
