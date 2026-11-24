@@ -76,7 +76,7 @@
     // They are set to window scope and available globally
 
     // Build PACKAGES with TON conversion from catalog.js PACKAGES_BASE
-    const PACKAGES = (window.PACKAGES_BASE || []).map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
+    window.PACKAGES = (window.PACKAGES_BASE || []).map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
 
     // Build NFT collections and CATEGORIES from catalog data
     const CATEGORIES = [
