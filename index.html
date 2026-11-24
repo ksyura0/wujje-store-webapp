@@ -607,7 +607,7 @@
     <div class="topbar">
       <div class="topbar-left">
         <button id="backBtn" class="back-btn" type="button">←</button>
-        <div id="brandMark" class="brand-mark">W</div>
+        <div id="brandMark" class="brand-mark">WS</div>
         <div style="min-width:0;">
           <div id="headerTitle" class="brand-title">Wujje Store</div>
           <div id="headerSub" class="brand-sub">Выдача 24/7 · В наличии</div>
@@ -1005,7 +1005,65 @@
       <div id="payModalStatus" class="status-note"></div>
     </div>
   </div>
-  <script>
+
+  <!-- Thank You Modal with Receipt -->
+  <div id="thankYouModal" class="modal-backdrop" style="backdrop-filter: blur(10px); background: rgba(0, 0, 0, 0.7);">
+    <div class="modal-box" style="background: rgba(24, 18, 46, 0.95); border: 1px solid rgba(168, 85, 247, 0.4); max-width: 340px;">
+      <div style="text-align: center; padding: 24px 20px;">
+        <!-- Success checkmark animation -->
+        <div style="font-size: 48px; margin-bottom: 16px; animation: checkmarkBounce 0.6s ease-out;">✅</div>
+        <div style="font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px;">Спасибо за заказ!</div>
+
+        <!-- Receipt card -->
+        <div style="background: rgba(12, 9, 24, 0.8); border: 1px solid rgba(192, 132, 252, 0.25); border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 20px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px;">Чек заказа</div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(192, 132, 252, 0.15);">
+            <div style="font-size: 11px; color: var(--muted);">Номер заказа</div>
+            <div class="receipt-order-id" style="font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer;">—</div>
+          </div>
+
+          <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(192, 132, 252, 0.15);">
+            <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">Товар</div>
+            <div class="receipt-item" style="font-size: 13px; font-weight: 600; color: var(--text);">—</div>
+          </div>
+
+          <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(192, 132, 252, 0.15);">
+            <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">Получатель</div>
+            <div class="receipt-recipient" style="font-size: 13px; font-weight: 600; color: var(--text); word-break: break-word;">—</div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(192, 132, 252, 0.15);">
+            <div style="font-size: 11px; color: var(--muted);">Оплачено</div>
+            <div class="receipt-amount" style="font-size: 14px; font-weight: 700; color: var(--accent);">—</div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 11px; color: var(--muted);">Способ оплаты</div>
+            <div class="receipt-method" style="font-size: 12px; font-weight: 600; color: var(--text);">—</div>
+          </div>
+
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(192, 132, 252, 0.15); text-align: center;">
+            <div style="font-size: 11px; color: var(--muted);">Время доставки</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--accent); margin-top: 4px;">1–3 минуты ⚡</div>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <button class="btn-my-orders primary-btn" type="button" style="width: 100%; margin-bottom: 10px; font-size: 14px;">Мои заказы</button>
+        <a class="btn-review secondary-btn" href="https://t.me" target="_blank" style="display: block; width: 100%; text-align: center; padding: 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-decoration: none; font-size: 14px; margin-bottom: 10px;">Оставить отзыв ⭐</a>
+        <button class="btn-close-thank-you secondary-btn" type="button" style="width: 100%; font-size: 14px;">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes checkmarkBounce {
+      0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+      70% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
     // Debug logging for Telegram WebApp - MUST run first
     window.debugLog = function(msg) {
       console.log("[Wujje Debug]", msg);
@@ -1219,14 +1277,6 @@
           { id: "rbx_800", title: "800 Robux", sub: "Пополнение аккаунта Roblox · В наличии", priceText: "990 ₽", rub: 990, tag: "В наличии", inputLabel: "Никнейм Roblox", inputPlaceholder: "RobloxNickname", allowSelf: false, action: "openProduct" },
           { id: "rbx_1700", title: "1 700 Robux", sub: "Пополнение аккаунта Roblox · В наличии", priceText: "1 990 ₽", rub: 1990, tag: "В наличии", inputLabel: "Никнейм Roblox", inputPlaceholder: "RobloxNickname", allowSelf: false, action: "openProduct" },
           { id: "rbx_4500", title: "4 500 Robux", sub: "Большой пакет Robux · В наличии", priceText: "4 890 ₽", rub: 4890, tag: "В наличии", inputLabel: "Никнейм Roblox", inputPlaceholder: "RobloxNickname", allowSelf: false, action: "openProduct" }
-        ]
-      },
-      {
-        id: "minecraft", group: "games", img: "./icons/minecraft.png", emoji: "⛏️",
-        title: "Minecraft", desc: "Лицензия (Microsoft Store) и монеты", fromText: "От 1 890 ₽", badge: "В наличии",
-        items: [
-          { id: "mc_key_ms", title: "Minecraft: Java & Bedrock (Ключ Microsoft Store)", sub: "Лицензионный ключ активации · В наличии", priceText: "1 890 ₽", rub: 1890, tag: "В наличии", inputLabel: "Email или @username для доставки ключа", inputPlaceholder: "player@example.com или @username", allowSelf: true, action: "openProduct" },
-          { id: "mc_coins_srv", title: "Виртуальные монеты на сервера", sub: "Внутриигровая валюта серверов · Нет в наличии", priceText: "—", rub: 0, tag: "Нет в наличии", tagType: "out", disabled: true, action: "openProduct" }
         ]
       },
       {
@@ -1493,7 +1543,7 @@
       currentTheme = THEMES.some((t) => t.id === themeId) ? themeId : "violet";
       document.documentElement.setAttribute("data-theme", currentTheme);
       const mark = document.getElementById("brandMark");
-      if (mark) mark.innerHTML = generateWSLogo(currentTheme);
+      if (mark) mark.textContent = "WS";
       if (save) localStorage.setItem(CONFIG.THEME_KEY, currentTheme);
       renderThemePickers();
     }
@@ -1536,7 +1586,7 @@
       document.getElementById(`screen-${viewName}`)?.classList.add("active");
 
       const mark = document.getElementById("brandMark");
-      if (mark) mark.innerHTML = generateWSLogo(currentTheme);
+      if (mark) mark.textContent = "WS";
       document.getElementById("headerTitle").textContent = title;
       document.getElementById("headerSub").textContent = sub;
 
@@ -2434,13 +2484,30 @@
       const box = document.getElementById("ordersList");
       const list = loadOrders();
       if (!list.length) { box.innerHTML = `<div style="text-align:center; padding:24px; color:var(--muted); font-size:13px;">Заказов пока нет</div>`; return; }
-      box.innerHTML = list.map((o) => `
-        <div class="order-row">
-          <div class="order-top"><span>#${o.id} · ${o.itemLabel}</span><span>${o.priceLabel}</span></div>
-          <div class="order-sub">Получатель: <b>${o.target}</b> · ${o.method} · ${o.statusText}<br>${o.dateText}</div>
-          <button class="order-copy-btn" data-text="${o.target}" style="font-size:11px; margin-top:6px; padding:4px 8px; background:var(--border); border:none; border-radius:4px; cursor:pointer; color:var(--text); font-weight:600;">📋 Скопировать</button>
-        </div>
-      `).join("");
+      box.innerHTML = list.map((o) => {
+        // Format Steam recipient beautifully
+        let displayTarget = o.target || "—";
+        let copyText = o.target || "—";
+
+        try {
+          const parsed = JSON.parse(o.target);
+          if (parsed.steam_login) {
+            const amount = parsed.amount_rub || 0;
+            displayTarget = `Steam: <b>${parsed.steam_login}</b> · ${fmt(amount)} ₽ (RUB)`;
+            copyText = parsed.steam_login;
+          }
+        } catch (e) {
+          // Not JSON, use as-is
+        }
+
+        return `
+          <div class="order-row">
+            <div class="order-top"><span>#${o.id} · ${o.itemLabel}</span><span>${o.priceLabel}</span></div>
+            <div class="order-sub">Получатель: ${displayTarget} · ${o.method} · ${o.statusText}<br>${o.dateText}</div>
+            <button class="order-copy-btn" data-text="${copyText.replace(/"/g, "&quot;")}" style="font-size:11px; margin-top:6px; padding:4px 8px; background:var(--border); border:none; border-radius:4px; cursor:pointer; color:var(--text); font-weight:600;">📋 Скопировать</button>
+          </div>
+        `;
+      }).join("");
 
       document.querySelectorAll(".order-copy-btn").forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -2752,6 +2819,68 @@
       logs.push({ id: orderId, err: error?.message, ts: Date.now() });
       localStorage.setItem("payment_logs", JSON.stringify(logs.slice(-20)));
     }
+
+    function showThankYouModal(orderData) {
+      const modal = document.getElementById("thankYouModal");
+      if (!modal) return;
+
+      // Trigger success haptic
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.("success");
+
+      // Fill modal with order data
+      const orderIdEl = modal.querySelector(".receipt-order-id");
+      if (orderIdEl) orderIdEl.textContent = `#${orderData.orderId}`;
+
+      const itemEl = modal.querySelector(".receipt-item");
+      if (itemEl) itemEl.textContent = orderData.item || "Товар";
+
+      const recipientEl = modal.querySelector(".receipt-recipient");
+      if (recipientEl) recipientEl.textContent = orderData.recipient || "—";
+
+      const amountEl = modal.querySelector(".receipt-amount");
+      if (amountEl) amountEl.textContent = `${fmt(orderData.amount)} ₽`;
+
+      const methodEl = modal.querySelector(".receipt-method");
+      if (methodEl) methodEl.textContent = orderData.method || "Баланс ₽";
+
+      // Add copy-to-clipboard for order ID
+      const copyBtn = modal.querySelector(".receipt-order-id");
+      if (copyBtn) {
+        copyBtn.style.cursor = "pointer";
+        copyBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard?.writeText(orderData.orderId);
+            const oldText = copyBtn.textContent;
+            copyBtn.textContent = "✅ Скопировано!";
+            setTimeout(() => { copyBtn.textContent = oldText; }, 2000);
+            haptic("light");
+          } catch (e) {}
+        });
+      }
+
+      // Setup action buttons
+      const myOrdersBtn = modal.querySelector(".btn-my-orders");
+      if (myOrdersBtn) {
+        myOrdersBtn.addEventListener("click", () => {
+          modal.classList.remove("open");
+          renderOrders();
+          switchScreen("orders", "Мои заказы", "История покупок");
+        });
+      }
+
+      const reviewBtn = modal.querySelector(".btn-review");
+      if (reviewBtn) {
+        reviewBtn.href = "https://t.me";
+        reviewBtn.target = "_blank";
+      }
+
+      const closeBtn = modal.querySelector(".btn-close-thank-you");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => modal.classList.remove("open"));
+      }
+
+      modal.classList.add("open");
+    }
     // ========== END BLOCK 5 ==========
 
     document.getElementById("proceedPayBtn").addEventListener("click", async () => {
@@ -2806,14 +2935,16 @@
 
         st.textContent = "Проводим оплату...";
 
-        // Steam category: special API endpoint
+        // Steam category: use real server endpoint
         if (selectedProductCategory === "steam") {
           const steamData = JSON.parse(recipient);
           const needRub = Math.ceil(steamData.amount_rub * 1.09);
 
           if (rubBalance < needRub) throw new Error(`Недостаточно средств (нужно ${fmt(needRub)} ₽, имеется ${fmt(rubBalance)} ₽)`);
 
-          const steamOrder = {
+          st.textContent = "Отправляем заказ на сервер...";
+
+          const steamPayload = {
             initData: tg?.initData || "",
             steam_login: steamData.steam_login,
             currency: steamData.currency,
@@ -2821,21 +2952,16 @@
             need_rub: needRub
           };
 
-          st.textContent = "Отправляем заказ на выкуп...";
-          const response = await fetch("/api/order/steam", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(steamOrder)
-          });
-
-          const d = await response.json();
+          const d = await API.call("/api/pay_balance", steamPayload);
           if (!d?.ok) throw new Error(d?.error || "Ошибка при обработке Steam заказа");
 
           setRubBalance(rubBalance - needRub, true);
+
+          const formattedRecipient = `Steam: ${steamData.steam_login} · ${fmt(needRub)} ₽ (RUB)`;
           saveOrder({
-            id: orderId,
-            itemLabel: `💾 Steam пополнение ${needRub} ₽`,
-            target: steamData.steam_login,
+            id: d.order_id || orderId,
+            itemLabel: `💾 Steam пополнение ${fmt(needRub)} ₽`,
+            target: formattedRecipient,
             rubAmount: needRub,
             priceLabel: `${fmt(needRub)} ₽`,
             method: "Баланс ₽",
@@ -2843,26 +2969,51 @@
             dateText: new Date().toLocaleString("ru-RU")
           });
 
-          st.textContent = "✅ Заказ принят! Автопополнение Steam запущено, зачисление займёт 1–3 минуты";
+          // Show thank you modal with receipt
+          showThankYouModal({
+            orderId: d.order_id || orderId,
+            item: `💾 Steam пополнение ${fmt(needRub)} ₽`,
+            recipient: formattedRecipient,
+            amount: needRub,
+            method: "Баланс ₽"
+          });
 
-          setTimeout(() => {
-            payModal.classList.remove("open");
-            st.textContent = "";
-          }, 3000);
+          payModal.classList.remove("open");
         }
         // Telegram Stars
         else if (checkoutMode === "stars" && resolvedRecipient) {
           const d = await withTimeout(API.payWithBalance(tg?.initData || "", selectedPackage.stars, recipient));
           if (!d?.ok) throw new Error(d?.error || "Ошибка сервера");
           setRubBalance(d.balance, true);
-          saveOrder({ id: d.order_id, stars: selectedPackage.stars, itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "✅ Оплачен", dateText: new Date().toLocaleString("ru-RU") });
+
+          const orderData = {
+            orderId: d.order_id,
+            item: `⭐ ${fmt(selectedPackage.stars)} Stars`,
+            recipient: recipient,
+            amount: rub,
+            method: "Баланс ₽"
+          };
+
+          saveOrder({ id: d.order_id, stars: selectedPackage.stars, itemLabel: orderData.item, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "✅ Оплачен", dateText: new Date().toLocaleString("ru-RU") });
+
+          showThankYouModal(orderData);
           payModal.classList.remove("open");
-          st.textContent = "";
         }
         // Other products
         else {
           setRubBalance(rubBalance - rub, true);
+
+          const orderData = {
+            orderId: orderId,
+            item: currentCheckoutItem.label,
+            recipient: recipient,
+            amount: rub,
+            method: "Баланс ₽"
+          };
+
           saveOrder({ id: orderId, itemLabel: currentCheckoutItem.label, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "✅ Оплачен", dateText: new Date().toLocaleString("ru-RU") });
+
+          showThankYouModal(orderData);
           payModal.classList.remove("open");
         }
       } catch (e) {
