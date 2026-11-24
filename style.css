@@ -639,11 +639,15 @@ html[data-theme] { transition: --bg 400ms ease, --accent 400ms ease; }
   font-size: 56px;
   font-weight: 700;
   font-family: "Unbounded", sans-serif;
-  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 22px rgba(168, 85, 247, 0.65));
+  background: none !important;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+  background-clip: unset;
+  color: #a855f7;
+  filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
   animation: loaderGlow 2s ease-in-out infinite;
 }
 

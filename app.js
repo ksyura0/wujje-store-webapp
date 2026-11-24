@@ -88,10 +88,7 @@
       window.PACKAGES = PACKAGES_FALLBACK.map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
     }
 
-    // Guarantee PACKAGES is accessible locally
-    const PACKAGES = window.PACKAGES && Array.isArray(window.PACKAGES) && window.PACKAGES.length > 0
-      ? window.PACKAGES
-      : PACKAGES_FALLBACK.map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
+    // PACKAGES is now guaranteed at window scope
 
     // Build NFT collections from RAW_122_GIFTS
     window.NFT_COLLECTIONS = (window.RAW_122_GIFTS || []).map(([title, floorTon]) => ({
@@ -229,17 +226,17 @@
 
     function calcQuote(starsCount) {
       const n = Math.max(1, Number(starsCount) || 50);
-      const exact = PACKAGES.find((p) => p.stars === n);
+      const exact = window.PACKAGES.find((p) => p.stars === n);
       if (exact) return { stars: n, rub: exact.rub, ton: exact.ton };
 
       // Base rate from first package: 76 ₽ / 50 stars = 1.52 ₽/star
-      const baseRate = PACKAGES[0].rub / PACKAGES[0].stars;
+      const baseRate = window.PACKAGES[0].rub / window.PACKAGES[0].stars;
       const discount = n >= 5000 ? 0.90 : n >= 1000 ? 0.94 : n >= 350 ? 0.97 : 1.0;
       const rub = Math.max(10, Math.round(n * baseRate * discount));
       return { stars: n, rub, ton: rubToTonSafe(rub) };
     }
 
-    let selectedPackage = PACKAGES[0];
+    let selectedPackage = window.PACKAGES[0];
     let selectedProduct = null;
     let checkoutMode = "stars";
     let currentView = "hub";
@@ -1173,9 +1170,9 @@
 
     function applyCustomStars(val) {
       const n = Math.max(1, Math.min(100000, Math.round(Number(val) || 50)));
-      const idx = PACKAGES.findIndex((p) => p.stars === n);
+      const idx = window.PACKAGES.findIndex((p) => p.stars === n);
       document.querySelectorAll(".package-card").forEach((c, i) => c.classList.toggle("active", i === idx));
-      selectedPackage = idx !== -1 ? PACKAGES[idx] : calcQuote(n);
+      selectedPackage = idx !== -1 ? window.PACKAGES[idx] : calcQuote(n);
       customStarsInput.value = String(n);
       document.getElementById("customQuoteRub").textContent = `${fmt(selectedPackage.rub)} ₽`;
       document.getElementById("customQuoteTon").textContent = `${selectedPackage.ton} TON`;
