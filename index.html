@@ -2306,22 +2306,22 @@
 
     // ===== BLOCK 5: Payment Security =====
     const __payments = new Map();
-    const __timeout = 30000;
-    function __validateOrder(o) {
-      if (!o?.id) throw new Error("Missing ID");
-      if ((o.rub || 0) + (o.ton || 0) <= 0) throw new Error("Invalid amount");
-      return true;
-    }
-    function __checkDupe(id) {
+    const __timeout_ms = 30000;
+    function checkDuplicatePayment(id) {
       const now = Date.now(), key = `${id}_${Math.floor(now/60000)}`;
       if (__payments.has(key) && now - __payments.get(key) < 2000) throw new Error("Already processing");
       __payments.set(key, now);
       return true;
     }
-    function __timeout(p, ms = __timeout) {
+    function validateOrderData(o) {
+      if (!o?.id) throw new Error("Missing ID");
+      if ((o.rub || 0) + (o.ton || 0) <= 0) throw new Error("Invalid amount");
+      return true;
+    }
+    function withTimeout(p, ms = __timeout_ms) {
       return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), ms))]);
     }
-    function __logErr(id, e) {
+    function logPaymentError(id, e) {
       console.error("[Err]", id, e?.message);
       const logs = JSON.parse(localStorage.getItem("logs") || "[]");
       logs.push({id, msg: e?.message, ts: Date.now()});
