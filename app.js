@@ -1,10 +1,10 @@
 ﻿    window.debugLog = function(msg) {
-      console.log("[Wujje Debug]", msg);
+      // Debug logging disabled in production
     };
 
     // Start logging immediately
-    setTimeout(() => window.debugLog("🚀 App starting..."), 100);
-    window.debugLog("✓ catalog.js and DOM ready");
+    // setTimeout(() => window.debugLog("🚀 App starting..."), 100);
+    // window.debugLog("✓ catalog.js and DOM ready");
     // Core utilities - MUST be defined before any other code
     const tg = window.Telegram?.WebApp;
     if (tg) {
@@ -28,7 +28,7 @@
       }
     };
 
-    window.debugLog("✓ Core utilities (tg, fmt, haptic) initialized");
+    // window.debugLog("✓ Core utilities (tg, fmt, haptic) initialized");
 
     // Dynamic TON rate fetching
     let currentTonRate = CONFIG.TON_RATE_RUB;
@@ -41,7 +41,7 @@
         const data = await response.json();
         if (data.rates?.TON?.RUB) {
           currentTonRate = Math.round(data.rates.TON.RUB);
-          window.debugLog(`✓ TON rate updated: ${currentTonRate} ₽`);
+          // window.debugLog(`✓ TON rate updated: ${currentTonRate} ₽`);
         }
       } catch (error) {
         console.warn("Failed to fetch TON rate, using default:", error);
@@ -83,20 +83,25 @@
     }
     window.PACKAGES = packagesData.map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
 
+    // Ensure PACKAGES is not empty before using it
+    if (!window.PACKAGES || window.PACKAGES.length === 0) {
+      window.PACKAGES = PACKAGES_FALLBACK.map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
+    }
+
     // Build NFT collections and CATEGORIES from catalog data
     window.CATEGORIES = [
       {
         id: "telegram", group: "telegram", img: "./icons/telegram.png", emoji: "✈️",
-        title: "Telegram", desc: "Stars и Telegram Premium", fromText: `От ${PACKAGES[0].rub} ₽`, badge: "В наличии",
+        title: "Telegram", desc: "Stars и Telegram Premium", fromText: `От ${(window.PACKAGES?.[0]?.rub) || 77} ₽`, badge: "В наличии",
         items: [
-          { id: "tg_stars", title: "Telegram Stars", sub: "Любое кол-во или пакеты 50–10 000 ⭐ · В наличии", priceText: `От ${PACKAGES[0].rub} ₽`, subPriceText: `от ${PACKAGES[0].ton} TON`, tag: "В наличии", action: "openStars" },
+          { id: "tg_stars", title: "Telegram Stars", sub: "Любое кол-во или пакеты 50–10 000 ⭐ · В наличии", priceText: `От ${(window.PACKAGES?.[0]?.rub) || 77} ₽`, subPriceText: `от ${(window.PACKAGES?.[0]?.ton) || 1} TON`, tag: "В наличии", action: "openStars" },
           { id: "tg_prem_3", title: "Telegram Premium (3 мес)", sub: "Подарком по @username · В наличии", priceText: "1 390 ₽", rub: 1390, tag: "В наличии", inputLabel: "Ваш @username в Telegram", inputPlaceholder: "@username", allowSelf: true, action: "openProduct" },
           { id: "tg_prem_12", title: "Telegram Premium (12 мес)", sub: "Годовая подписка подарком · В наличии", priceText: "3 890 ₽", rub: 3890, tag: "В наличии", inputLabel: "Ваш @username в Telegram", inputPlaceholder: "@username", allowSelf: true, action: "openProduct" }
         ]
       },
       {
         id: "nft_gifts", group: "nft", img: "./icons/nft.png", emoji: "🎁",
-        title: "NFT подарки", desc: "122 коллекции, модели и флор", fromText: `От ${NFT_COLLECTIONS[5].floorRub} ₽`, badge: "122 в наличии",
+        title: "NFT подарки", desc: "122 коллекции, модели и флор", fromText: `От ${(window.NFT_COLLECTIONS?.[5]?.floorRub) || 150} ₽`, badge: "122 в наличии",
         action: "openNftList"
       },
       {
@@ -257,7 +262,6 @@
         updateTonBalanceDisplay();
         return balanceTon;
       } catch (error) {
-        console.error("Failed to fetch TON balance:", error);
         return null;
       }
     }
@@ -274,7 +278,7 @@
     }
 
     tonConnectUI.onStatusChange(async (wallet) => {
-      window.debugLog(`Wallet status changed: ${wallet ? "connected" : "disconnected"}`);
+      // window.debugLog(`Wallet status changed: ${wallet ? "connected" : "disconnected"}`);
       if (wallet) {
         await fetchTonBalance();
         // Refresh balance every 30 seconds while connected
@@ -1644,7 +1648,6 @@
     }
 
     function logPaymentError(orderId, error) {
-      console.error("[Payment]", { orderId, msg: error?.message, ton: tonBalance, rub: rubBalance });
       const logs = JSON.parse(localStorage.getItem("payment_logs") || "[]");
       logs.push({ id: orderId, err: error?.message, ts: Date.now() });
       localStorage.setItem("payment_logs", JSON.stringify(logs.slice(-20)));
@@ -1743,7 +1746,6 @@
       return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), ms))]);
     }
     function logPaymentError(id, e) {
-      console.error("[Err]", id, e?.message);
       const logs = JSON.parse(localStorage.getItem("logs") || "[]");
       logs.push({id, msg: e?.message, ts: Date.now()});
       localStorage.setItem("logs", JSON.stringify(logs.slice(-10)));
