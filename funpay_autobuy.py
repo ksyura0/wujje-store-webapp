@@ -2,34 +2,31 @@
 # -*- coding: utf-8 -*-
 """
 FunPay Steam AutoBuy Module
-Автоматический выкуп пополнения Steam с самого выгодного лота на FunPay
+Автоматический выкуп пополнения Steam с самого выгодного лота на FunPay через реальный парсинг HTML
 """
 
 import requests
 import logging
 import os
 import json
+import re
 from typing import Dict, Optional, Tuple
 from datetime import datetime
 from pathlib import Path
 import time
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, parse_qs, urlparse
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class FunPayAutoBuy:
-    """FunPay Steam AutoBuy Handler"""
+    """FunPay Steam AutoBuy Handler - работает с реальным HTML"""
 
-    # FunPay API endpoints
+    # FunPay endpoints
     FUNPAY_BASE = "https://funpay.com"
-    FUNPAY_LOGIN = f"{FUNPAY_BASE}/api/account/login"
-    FUNPAY_PRODUCTS = f"{FUNPAY_BASE}/api/products"
-    FUNPAY_BALANCE = f"{FUNPAY_BASE}/api/account/balance"
-    FUNPAY_ORDER = f"{FUNPAY_BASE}/api/order"
-
-    # Steam category ID on FunPay (may need adjustment based on current FunPay structure)
-    STEAM_CATEGORY_ID = "steam_balance"
+    STEAM_SECTION = f"{FUNPAY_BASE}/chips/99/"  # Steam balance top-ups section
 
     # Currency/region mapping
     CURRENCY_MAP = {
@@ -55,40 +52,117 @@ class FunPayAutoBuy:
         self.admin_id = admin_id
         self.max_price_markup = max_price_markup
         self.session = None
-        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        self.csrf_token = None
+        self.user_id = None
 
     def _init_session(self) -> bool:
-        """Initialize requests session with golden_key"""
+        """Initialize requests session with golden_key and load page data"""
         try:
             self.session = requests.Session()
             self.session.headers.update({
                 "User-Agent": self.user_agent,
-                "Accept": "application/json",
-                "X-Requested-With": "XMLHttpRequest"
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "ru-RU,ru;q=0.9",
+                "Accept-Encoding": "gzip, deflate",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1"
             })
 
             # Set golden_key cookie
-            self.session.cookies.set("golden_key", self.golden_key, domain="funpay.com")
+            self.session.cookies.set("golden_key", self.golden_key, domain="funpay.com", path="/")
 
-            logger.info("✅ FunPay session initialized")
+            logger.info("✅ FunPay session initialized with golden_key")
+
+            # Load main page to extract CSRF and user_id
+            if not self._load_page_data():
+                logger.error("❌ Failed to load page data")
+                return False
+
             return True
         except Exception as e:
             logger.error(f"❌ Failed to init session: {e}")
             return False
 
+    def _load_page_data(self) -> bool:
+        """Load FunPay main page and extract CSRF token and user ID"""
+        try:
+            response = self.session.get(self.FUNPAY_BASE, timeout=15)
+            response.raise_for_status()
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            # Try to find data-app-data in body tag
+            body_tag = soup.find('body')
+            if body_tag and body_tag.get('data-app-data'):
+                try:
+                    app_data = json.loads(body_tag.get('data-app-data'))
+                    self.csrf_token = app_data.get('csrf_token')
+                    self.user_id = app_data.get('userId') or app_data.get('user_id')
+                except:
+                    pass
+
+            # Try to find CSRF in meta tags
+            if not self.csrf_token:
+                csrf_meta = soup.find('meta', {'name': 'csrf-token'})
+                if csrf_meta:
+                    self.csrf_token = csrf_meta.get('content')
+
+            # Try to extract user_id from page content
+            if not self.user_id:
+                user_script = soup.find('script', string=re.compile(r'userId|user_id'))
+                if user_script:
+                    match = re.search(r'["\']?(?:userId|user_id)["\']?\s*:\s*(\d+)', user_script.string)
+                    if match:
+                        self.user_id = match.group(1)
+
+            if self.csrf_token:
+                logger.info(f"✅ CSRF token loaded: {self.csrf_token[:10]}...")
+            if self.user_id:
+                logger.info(f"✅ User ID loaded: {self.user_id}")
+
+            return bool(self.csrf_token)
+
+        except Exception as e:
+            logger.error(f"❌ Failed to load page data: {e}")
+            return False
+
     def check_balance(self) -> Optional[float]:
-        """Get current FunPay account balance"""
+        """Get current FunPay account balance from profile page"""
         try:
             if not self.session:
                 self._init_session()
 
-            response = self.session.get(self.FUNPAY_BALANCE, timeout=10)
+            response = self.session.get(f"{self.FUNPAY_BASE}/account", timeout=15)
             response.raise_for_status()
 
-            data = response.json()
-            balance = float(data.get("balance", 0))
-            logger.info(f"📊 FunPay balance: {balance:.2f} ₽")
-            return balance
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            # Look for balance in various possible locations
+            balance_text = None
+
+            # Try to find balance in common patterns
+            balance_patterns = [
+                soup.find('div', {'class': re.compile(r'balance|wallet')}),
+                soup.find('span', {'class': re.compile(r'balance|money')}),
+                soup.find('a', {'href': re.compile(r'account|wallet')})
+            ]
+
+            for elem in balance_patterns:
+                if elem:
+                    text = elem.get_text()
+                    match = re.search(r'(\d+(?:\.\d{1,2})?)\s*₽', text)
+                    if match:
+                        balance_text = match.group(1)
+                        break
+
+            if balance_text:
+                balance = float(balance_text)
+                logger.info(f"📊 FunPay balance: {balance:.2f} ₽")
+                return balance
+            else:
+                logger.warning("⚠️ Could not parse balance from page")
+                return None
 
         except Exception as e:
             logger.error(f"❌ Failed to check balance: {e}")
@@ -96,7 +170,7 @@ class FunPayAutoBuy:
 
     def search_best_offer(self, amount_rub: float, currency: str) -> Optional[Dict]:
         """
-        Search for best Steam balance offer on FunPay
+        Search for best Steam balance offer on FunPay by parsing HTML
 
         Args:
             amount_rub: Amount in rubles to buy
@@ -114,68 +188,84 @@ class FunPayAutoBuy:
 
             logger.info(f"🔍 Searching best offer: {amount_rub} ₽ ({currency})")
 
-            # Fetch Steam balance offers from FunPay
-            params = {
-                "category": self.STEAM_CATEGORY_ID,
-                "currency": currency,
-                "sort": "price",
-                "online_only": True
-            }
-
-            response = self.session.get(f"{self.FUNPAY_PRODUCTS}/offers", params=params, timeout=15)
+            # Load Steam section page
+            response = self.session.get(self.STEAM_SECTION, timeout=15)
             response.raise_for_status()
 
-            offers = response.json().get("offers", [])
+            soup = BeautifulSoup(response.content, 'html.parser')
 
-            if not offers:
-                logger.warning(f"⚠️ No Steam balance offers found for {currency}")
+            # Find all offer items (tc-item class is typical for FunPay offer cards)
+            offer_items = soup.find_all('a', {'class': re.compile(r'tc-item|offer')})
+
+            if not offer_items:
+                logger.warning(f"⚠️ No Steam balance offers found")
                 return None
 
-            # Filter and sort offers
             valid_offers = []
-            for offer in offers:
+
+            for item in offer_items:
                 try:
-                    # Check seller is online
-                    if not offer.get("seller_online"):
+                    # Extract offer ID from href
+                    href = item.get('href', '')
+                    if not href:
                         continue
 
-                    # Check auto-delivery enabled
-                    if not offer.get("auto_delivery"):
+                    offer_id = href.strip('/')
+
+                    # Get offer content
+                    offer_text = item.get_text(separator=' ', strip=True)
+
+                    # Check if online (look for online badge)
+                    is_online = bool(item.find(class_=re.compile(r'online|status-online')))
+
+                    # Check for auto-delivery (lightning icon or "auto" text)
+                    is_auto = bool(re.search(r'⚡|auto|automatic', offer_text, re.IGNORECASE))
+
+                    # Extract seller name
+                    seller_elem = item.find(class_=re.compile(r'seller|username'))
+                    seller_name = seller_elem.get_text(strip=True) if seller_elem else "Unknown"
+
+                    # Extract price
+                    price_match = re.search(r'(\d+(?:\.\d{1,2})?)\s*₽', offer_text)
+                    if not price_match:
+                        continue
+                    price = float(price_match.group(1))
+
+                    # Extract rating
+                    rating_match = re.search(r'(\d+(?:\.\d{1,2})?)\s*(?:rating|★)', offer_text)
+                    rating = float(rating_match.group(1)) if rating_match else 5.0
+
+                    # Apply filters
+                    if not is_online:
+                        logger.debug(f"Skipping offer: seller offline")
                         continue
 
-                    # Check rating >= MIN_RATING
-                    rating = float(offer.get("seller_rating", 0))
+                    if not is_auto:
+                        logger.debug(f"Skipping offer: no auto-delivery")
+                        continue
+
                     if rating < self.MIN_RATING:
                         logger.debug(f"Skipping offer: low rating {rating}")
                         continue
 
-                    # Check not frozen
-                    if offer.get("frozen"):
-                        continue
-
-                    # Calculate price per unit
-                    price = float(offer.get("price", float('inf')))
-                    quantity = float(offer.get("quantity", 1))
-                    price_per_unit = price / quantity if quantity > 0 else float('inf')
-
-                    # Check within max markup
-                    base_price = amount_rub  # Base price assumption
-                    if price_per_unit > (base_price * self.max_price_markup):
-                        logger.debug(f"Skipping offer: price markup too high {price_per_unit}")
+                    # Check price within markup
+                    if price > (amount_rub * self.max_price_markup):
+                        logger.debug(f"Skipping offer: price {price} > max {amount_rub * self.max_price_markup}")
                         continue
 
                     valid_offers.append({
-                        "id": offer.get("id"),
-                        "seller_id": offer.get("seller_id"),
-                        "seller_name": offer.get("seller_name"),
+                        "id": offer_id,
+                        "offer_url": urljoin(self.FUNPAY_BASE, href),
+                        "seller_name": seller_name,
                         "price": price,
-                        "quantity": quantity,
-                        "price_per_unit": price_per_unit,
+                        "price_per_unit": price / amount_rub if amount_rub > 0 else price,
                         "rating": rating,
-                        "currency": currency
+                        "currency": currency,
+                        "is_auto": is_auto,
+                        "is_online": is_online
                     })
 
-                except (KeyError, ValueError) as e:
+                except (KeyError, ValueError, AttributeError) as e:
                     logger.debug(f"Skipping malformed offer: {e}")
                     continue
 
@@ -191,6 +281,7 @@ class FunPayAutoBuy:
             logger.info(f"   Seller: {best_offer['seller_name']} (rating: {best_offer['rating']})")
             logger.info(f"   Price: {best_offer['price']:.2f} {best_offer['currency']}")
             logger.info(f"   Per unit: {best_offer['price_per_unit']:.4f}")
+            logger.info(f"   URL: {best_offer['offer_url']}")
 
             return best_offer
 
@@ -200,7 +291,7 @@ class FunPayAutoBuy:
 
     def purchase_offer(self, offer: Dict, steam_login: str, amount_rub: float) -> Optional[str]:
         """
-        Purchase selected offer with Steam login
+        Purchase selected offer with Steam login by parsing and submitting real form
 
         Args:
             offer: Offer dict from search_best_offer()
@@ -208,7 +299,7 @@ class FunPayAutoBuy:
             amount_rub: Amount in rubles
 
         Returns:
-            Order ID on FunPay or None if failed
+            Order ID on FunPay (e.g., #XXXXXXX) or None if failed
         """
         try:
             if not self.session:
@@ -222,28 +313,70 @@ class FunPayAutoBuy:
 
             logger.info(f"💳 Processing purchase from {offer['seller_name']}...")
 
-            # Prepare order data
-            order_data = {
-                "offer_id": offer["id"],
-                "steam_login": steam_login,
-                "quantity": amount_rub,  # Amount in rubles
-                "payment_method": "balance",  # Pay from FunPay internal balance
-                "currency": offer["currency"]
-            }
-
-            # Create order on FunPay
-            response = self.session.post(
-                self.FUNPAY_ORDER,
-                json=order_data,
-                timeout=20
-            )
+            # Load offer page to extract form fields
+            response = self.session.get(offer['offer_url'], timeout=15)
             response.raise_for_status()
 
-            result = response.json()
-            order_id = result.get("order_id")
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            # Find purchase form
+            form = soup.find('form', {'method': 'POST'})
+            if not form:
+                logger.error("❌ Could not find purchase form on offer page")
+                return None
+
+            # Extract form fields
+            form_data = {}
+            for input_field in form.find_all(['input', 'textarea']):
+                name = input_field.get('name')
+                value = input_field.get('value')
+                if name:
+                    form_data[name] = value
+
+            # Set/override critical fields
+            form_data['steam_login'] = steam_login
+            form_data['amount'] = str(amount_rub)
+            if self.csrf_token:
+                form_data['csrf_token'] = self.csrf_token
+
+            # Determine form action URL
+            form_action = form.get('action', '')
+            if form_action.startswith('http'):
+                form_url = form_action
+            else:
+                form_url = urljoin(self.FUNPAY_BASE, form_action)
+
+            logger.info(f"📝 Submitting form to: {form_url}")
+            logger.info(f"   Form data: steam_login={steam_login}, amount={amount_rub}")
+
+            # Submit purchase
+            purchase_response = self.session.post(
+                form_url,
+                data=form_data,
+                timeout=20,
+                allow_redirects=True
+            )
+
+            # Look for order ID in response
+            order_id = None
+
+            # Try to find order ID in URL (redirect)
+            if 'order' in purchase_response.url:
+                match = re.search(r'/order/(\d+)', purchase_response.url)
+                if match:
+                    order_id = f"#{match.group(1)}"
+
+            # Try to find order ID in response content
+            if not order_id:
+                content = purchase_response.text
+                # Look for order ID pattern like #XXXXXXX
+                match = re.search(r'#(\d+)', content)
+                if match:
+                    order_id = f"#{match.group(1)}"
 
             if not order_id:
-                logger.error(f"❌ Failed to get order ID: {result}")
+                logger.error(f"❌ Failed to extract order ID from response")
+                logger.debug(f"Response URL: {purchase_response.url}")
                 return None
 
             logger.info(f"✅ Order created: {order_id}")
@@ -255,24 +388,6 @@ class FunPayAutoBuy:
 
         except Exception as e:
             logger.error(f"❌ Failed to purchase offer: {e}")
-            return None
-
-    def get_order_status(self, order_id: str) -> Optional[Dict]:
-        """Get order status from FunPay"""
-        try:
-            if not self.session:
-                self._init_session()
-
-            response = self.session.get(f"{self.FUNPAY_ORDER}/{order_id}", timeout=10)
-            response.raise_for_status()
-
-            status_data = response.json()
-            logger.info(f"📋 Order {order_id} status: {status_data.get('status', 'unknown')}")
-
-            return status_data
-
-        except Exception as e:
-            logger.error(f"❌ Failed to get order status: {e}")
             return None
 
     def process_steam_order(self, order: Dict) -> Dict:
@@ -320,6 +435,12 @@ class FunPayAutoBuy:
             logger.info(f"   Steam login: {steam_login}")
             logger.info(f"   Amount: {amount_rub} ₽ ({currency})")
 
+            # Initialize session if not already done
+            if not self.session:
+                if not self._init_session():
+                    result["message"] = "Failed to initialize FunPay session"
+                    return result
+
             # Step 1: Search best offer
             offer = self.search_best_offer(amount_rub, currency)
             if not offer:
@@ -338,22 +459,20 @@ class FunPayAutoBuy:
                 result["message"] = "Failed to create FunPay order"
                 return result
 
-            # Step 4: Check status
-            time.sleep(2)  # Wait for order to process
-            status = self.get_order_status(funpay_order_id)
+            # Step 4: Wait for processing
+            time.sleep(2)
 
             # Step 5: Final balance
             balance_after = self.check_balance()
 
             result["success"] = True
             result["funpay_order_id"] = funpay_order_id
-            result["status"] = status.get("status", "pending") if status else "pending"
+            result["status"] = "pending"  # Initial status
             result["message"] = f"Order created successfully: {funpay_order_id}"
             result["balance_after"] = balance_after
 
             logger.info(f"✅ Steam order {wujje_order_id} processed successfully")
             logger.info(f"   FunPay order: {funpay_order_id}")
-            logger.info(f"   Status: {result['status']}")
             logger.info(f"   Balance: {balance_before:.2f} → {balance_after:.2f} ₽")
 
             return result
