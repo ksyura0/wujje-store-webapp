@@ -2220,6 +2220,46 @@
       openTopup(Math.max(10, (currentCheckoutItem?.rub || 100) - rubBalance));
     });
 
+    // ========== BLOCK 5: PAYMENT SECURITY INLINE ==========
+    const processedPayments = new Map();
+    const PAYMENT_TIMEOUT = 30000;
+
+    function validateOrderData(order) {
+      if (!order || typeof order !== "object") throw new Error("Invalid order");
+      if (!order.id) throw new Error("Missing order ID");
+      if ((order.rub || 0) <= 0 && (order.ton || 0) <= 0) throw new Error("Invalid amount");
+      return true;
+    }
+
+    function checkDuplicatePayment(orderId) {
+      const now = Date.now();
+      const key = `${orderId}_${Math.floor(now / 60000)}`;
+      if (processedPayments.has(key) && now - processedPayments.get(key) < 2000) {
+        throw new Error("Платёж уже обрабатывается");
+      }
+      processedPayments.set(key, now);
+      if (processedPayments.size > 100) {
+        const firstKey = processedPayments.keys().next().value;
+        processedPayments.delete(firstKey);
+      }
+      return true;
+    }
+
+    function withTimeout(promise, ms = PAYMENT_TIMEOUT) {
+      return Promise.race([
+        promise,
+        new Promise((_, r) => setTimeout(() => r(new Error("Таймаут запроса")), ms))
+      ]);
+    }
+
+    function logPaymentError(orderId, error) {
+      console.error("[Payment]", { orderId, msg: error?.message, ton: tonBalance, rub: rubBalance });
+      const logs = JSON.parse(localStorage.getItem("payment_logs") || "[]");
+      logs.push({ id: orderId, err: error?.message, ts: Date.now() });
+      localStorage.setItem("payment_logs", JSON.stringify(logs.slice(-20)));
+    }
+    // ========== END BLOCK 5 ==========
+
     document.getElementById("proceedPayBtn").addEventListener("click", async () => {
       haptic("medium");
       const raw = targetInput.value.trim();
@@ -2235,48 +2275,65 @@
     document.getElementById("payWithBalanceBtn").addEventListener("click", async () => {
       const st = document.getElementById("payModalStatus");
       const recipient = quickRecipientInput.value.trim();
-      if (!VALIDATORS.isValidUsername(recipient)) { st.textContent = "Укажи корректного получателя."; return; }
-      const rub = currentCheckoutItem.rub;
-      if (rubBalance < rub) { st.textContent = "Недостаточно средств на балансе."; return; }
+      try {
+        if (!VALIDATORS.isValidUsername(recipient)) throw new Error("Укажи корректного получателя");
+        const rub = currentCheckoutItem?.rub || 0;
+        if (rub <= 0) throw new Error("Invalid amount");
+        if (rubBalance < rub) throw new Error(`Недостаточно средств (нужно ${fmt(rub)} ₽, имеется ${fmt(rubBalance)} ₽)`);
 
-      if (checkoutMode === "stars" && resolvedRecipient) {
+        const orderId = `bal_${Date.now()}`;
+        checkDuplicatePayment(orderId);
+        validateOrderData({ id: orderId, rub });
+
         st.textContent = "Проводим оплату...";
-        const d = await API.payWithBalance(tg?.initData || "", selectedPackage.stars, recipient);
-        if (d?.ok) {
-          setRubBalance(d.balance, true);
-          saveOrder({ id: d.order_id, stars: selectedPackage.stars, itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "Оплачен", dateText: new Date().toLocaleString("ru-RU") });
-          payModal.classList.remove("open");
-          document.getElementById("statusNote").textContent = `✅ Заказ #${d.order_id} оплачен!`;
-        } else st.textContent = "Ошибка оплаты.";
-        return;
-      }
 
-      const id = "ord_" + Date.now();
-      setRubBalance(rubBalance - rub, true);
-      saveOrder({ id, itemLabel: currentCheckoutItem.label, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "Оплачен", dateText: new Date().toLocaleString("ru-RU") });
-      payModal.classList.remove("open");
-      st.textContent = "";
+        if (checkoutMode === "stars" && resolvedRecipient) {
+          const d = await withTimeout(API.payWithBalance(tg?.initData || "", selectedPackage.stars, recipient));
+          if (!d?.ok) throw new Error(d?.error || "Ошибка сервера");
+          setRubBalance(d.balance, true);
+          saveOrder({ id: d.order_id, stars: selectedPackage.stars, itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "✅ Оплачен", dateText: new Date().toLocaleString("ru-RU") });
+          payModal.classList.remove("open");
+          st.textContent = "";
+        } else {
+          setRubBalance(rubBalance - rub, true);
+          saveOrder({ id: orderId, itemLabel: currentCheckoutItem.label, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "✅ Оплачен", dateText: new Date().toLocaleString("ru-RU") });
+          payModal.classList.remove("open");
+        }
+      } catch (e) {
+        st.textContent = `❌ ${e?.message || "Ошибка"}`;
+        logPaymentError(`bal_${Date.now()}`, e);
+      }
     });
 
     document.getElementById("payWithCryptoBtn").addEventListener("click", async () => {
       const st = document.getElementById("payModalStatus");
       const recipient = quickRecipientInput.value.trim();
-      if (!VALIDATORS.isValidUsername(recipient)) { st.textContent = "Укажи корректного получателя."; return; }
-      if (!tonConnectUI.wallet) { await tonConnectUI.openModal(); return; }
-      const ton = currentCheckoutItem.ton;
       try {
+        if (!VALIDATORS.isValidUsername(recipient)) throw new Error("Укажи корректного получателя");
+        if (!tonConnectUI.wallet) {
+          await tonConnectUI.openModal();
+          return;
+        }
+
+        const ton = currentCheckoutItem?.ton || 0;
+        if (ton <= 0) throw new Error("Invalid TON amount");
+        if (tonBalance && tonBalance < ton) throw new Error(`Недостаточно TON (нужно ${ton}, имеется ${tonBalance})`);
+
+        const orderId = `ton_${Date.now()}`;
+        checkDuplicatePayment(orderId);
+        validateOrderData({ id: orderId, ton });
+
         st.textContent = "Подтверди в кошельке...";
-        await tonConnectUI.sendTransaction({
+        await withTimeout(tonConnectUI.sendTransaction({
           validUntil: Math.floor(Date.now() / 1000) + 300,
           messages: [{ address: CONFIG.RECEIVER_WALLET, amount: Math.round(ton * 1e9).toString() }]
-        });
-        const id = "ton_" + Date.now();
-        saveOrder({ id, stars: checkoutMode === "stars" ? selectedPackage.stars : null, itemLabel: currentCheckoutItem.label, target: recipient, tonAmount: ton, priceLabel: `${ton} TON`, method: "Crypto TON", statusText: "На проверке", dateText: new Date().toLocaleString("ru-RU") });
+        }));
 
-        // Save Web3 transaction
+        saveOrder({ id: orderId, stars: checkoutMode === "stars" ? selectedPackage.stars : null, itemLabel: currentCheckoutItem.label, target: recipient, tonAmount: ton, priceLabel: `${ton} TON`, method: "Crypto TON", statusText: "⏳ На проверке", dateText: new Date().toLocaleString("ru-RU") });
+
         const web3TxList = JSON.parse(localStorage.getItem("web3_tx_list") || "[]");
         web3TxList.unshift({
-          id,
+          id: orderId,
           amount: ton,
           to: recipient,
           item: currentCheckoutItem.label,
@@ -2286,7 +2343,16 @@
         localStorage.setItem("web3_tx_list", JSON.stringify(web3TxList.slice(0, 50)));
 
         payModal.classList.remove("open");
-      } catch (e) { st.textContent = "Оплата отменена."; }
+        st.textContent = "";
+      } catch (e) {
+        const msg = e?.message || "Ошибка платежа";
+        if (!msg.includes("отменена")) {
+          st.textContent = `❌ ${msg}`;
+          logPaymentError(`ton_${Date.now()}`, e);
+        } else {
+          st.textContent = "Оплата отменена пользователем";
+        }
+      }
     });
 
     applyTheme(currentTheme, false);
