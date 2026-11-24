@@ -79,7 +79,7 @@
     window.PACKAGES = (window.PACKAGES_BASE || []).map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
 
     // Build NFT collections and CATEGORIES from catalog data
-    const CATEGORIES = [
+    window.CATEGORIES = [
       {
         id: "telegram", group: "telegram", img: "./icons/telegram.png", emoji: "✈️",
         title: "Telegram", desc: "Stars и Telegram Premium", fromText: `От ${PACKAGES[0].rub} ₽`, badge: "В наличии",
