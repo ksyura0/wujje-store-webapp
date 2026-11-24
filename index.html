@@ -551,8 +551,88 @@
       width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--border);
       background: var(--field); color: var(--text); display: flex; align-items: center;
       justify-content: space-between; gap: 10px; cursor: pointer; text-align: left; margin-bottom: 9px;
+      transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1);
     }
-    .pay-choice-left { display: flex; align-items: center; gap: 11px; }
+    .pay-choice-btn:hover { transform: translateY(-2px); background: var(--glass-strong); border-color: var(--border-strong); }
+    .pay-choice-btn:active { transform: scale(0.97); }
+
+    /* Smooth theme transitions */
+    * { transition: background-color 400ms cubic-bezier(0.22, 1, 0.36, 1), color 400ms cubic-bezier(0.22, 1, 0.36, 1), border-color 400ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 400ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+    /* Theme option active animation */
+    .theme-option { transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .theme-option.active { transform: scale(1.08); }
+
+    /* Screen transitions */
+    .screen { animation: screenFadeIn 350ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    @keyframes screenFadeIn {
+      0% { opacity: 0; transform: translateY(20px); filter: blur(4px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    /* Modal and sheet animations */
+    .sheet { animation: sheetSlideUp 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .sheet::backdrop { animation: backdropFadeIn 300ms cubic-bezier(0.22, 1, 0.36, 1) forwards; backdrop-filter: blur(8px); }
+    @keyframes sheetSlideUp {
+      0% { opacity: 0; transform: translateY(40px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes backdropFadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    /* Card hover animations */
+    .glass-card { transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .glass-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); }
+
+    /* Button animations */
+    button { transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+    button:hover { transform: translateY(-2px); }
+    button:active { transform: scale(0.97); }
+
+    /* Gradient flowing animation */
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Loading spinner smooth */
+    @keyframes spinSmooth {
+      0% { transform: rotate(0deg); opacity: 1; }
+      100% { transform: rotate(360deg); opacity: 1; }
+    }
+
+    .spinner { animation: spinSmooth 1.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; }
+
+    /* Success checkmark animation */
+    @keyframes checkmarkPop {
+      0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    .checkmark { animation: checkmarkPop 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+    /* Dock animation */
+    .dock { transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+    /* Price pulse animation for special items */
+    @keyframes pricePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .price-pulse { animation: pricePulse 2s ease-in-out infinite; }
+
+    /* Smooth color transitions for all theme-aware elements */
+    .brand-mark { transition: filter 400ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .hero-card { transition: all 400ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .dock-btn { transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .dock-btn:hover { transform: scale(1.1); }
+    .dock-btn.active { transform: scale(1.08); }
+  .pay-choice-left { display: flex; align-items: center; gap: 11px; }
     .pay-choice-icon { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 900; background: var(--accent-soft); border: 1px solid var(--border-strong); }
   </style>
   <!-- Performance Optimizations CSS -->
@@ -1344,9 +1424,68 @@
     }
 
     let currentTheme = localStorage.getItem(CONFIG.THEME_KEY) || "violet";
+
+    // Generate dynamic SVG WS logo based on theme
+    function generateWSLogo(themeId) {
+      const logoConfigs = {
+        violet: {
+          colors: ["#8B5CF6", "#6D28D9", "#C084FC"],
+          glow: "rgba(168, 85, 247, 0.6)"
+        },
+        sapphire: {
+          colors: ["#1E293B", "#0F172A", "#CBD5E1"],
+          glow: "rgba(56, 189, 248, 0.4)"
+        },
+        emerald: {
+          colors: ["#10B981", "#047857", "#34D399"],
+          glow: "rgba(16, 185, 129, 0.5)"
+        },
+        ice: {
+          colors: ["#FFFFFF", "#E2E8F0", "#94A3B8"],
+          glow: "rgba(226, 232, 240, 0.3)"
+        }
+      };
+
+      const config = logoConfigs[themeId] || logoConfigs.violet;
+      const [col1, col2, col3] = config.colors;
+
+      return `
+        <svg width="32" height="32" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px ${config.glow});">
+          <defs>
+            <linearGradient id="grad-w" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:${col1};stop-opacity:1" />
+              <stop offset="50%" style="stop-color:${col2};stop-opacity:1" />
+              <stop offset="100%" style="stop-color:${col3};stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="grad-s" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:${col3};stop-opacity:1" />
+              <stop offset="50%" style="stop-color:${col1};stop-opacity:1" />
+              <stop offset="100%" style="stop-color:${col2};stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <!-- W letter with 3D effect -->
+          <path d="M 16 32 L 20 90 L 28 50 L 36 90 L 40 32 L 32 70 L 28 42 Z" fill="url(#grad-w)" opacity="0.95"/>
+          <path d="M 16 32 L 20 90 L 28 50 L 36 90 L 40 32 L 32 70 L 28 42 Z" fill="url(#grad-w)" opacity="0.3" transform="translate(1.5, 1.5) skewY(2)"/>
+
+          <!-- S letter with 3D effect -->
+          <path d="M 88 35 Q 95 35 95 45 Q 95 50 88 52 Q 95 54 95 60 Q 95 70 88 85 Q 82 90 78 90 L 72 90 L 72 80 L 78 80 Q 83 80 83 72 Q 83 65 78 65 L 72 65 L 72 55 L 78 55 Q 83 55 83 48 Q 83 43 78 43 L 72 43 L 72 33 L 78 33 Q 85 33 88 35 Z" fill="url(#grad-s)" opacity="0.95"/>
+          <path d="M 88 35 Q 95 35 95 45 Q 95 50 88 52 Q 95 54 95 60 Q 95 70 88 85 Q 82 90 78 90 L 72 90 L 72 80 L 78 80 Q 83 80 83 72 Q 83 65 78 65 L 72 65 L 72 55 L 78 55 Q 83 55 83 48 Q 83 43 78 43 L 72 43 L 72 33 L 78 33 Q 85 33 88 35 Z" fill="url(#grad-s)" opacity="0.3" transform="translate(1.5, 1.5) skewY(2)"/>
+        </svg>
+      `;
+    }
+
+    let currentTheme = localStorage.getItem(CONFIG.THEME_KEY) || "violet";
     function applyTheme(themeId, save = true) {
       currentTheme = THEMES.some((t) => t.id === themeId) ? themeId : "violet";
       document.documentElement.setAttribute("data-theme", currentTheme);
+
+      // Update dynamic WS logo
+      const mark = document.getElementById("brandMark");
+      if (mark) {
+        mark.innerHTML = generateWSLogo(currentTheme);
+        mark.style.transition = "filter 400ms cubic-bezier(0.22, 1, 0.36, 1)";
+      }
+
       if (save) localStorage.setItem(CONFIG.THEME_KEY, currentTheme);
       renderThemePickers();
     }
