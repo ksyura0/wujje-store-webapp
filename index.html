@@ -1415,7 +1415,6 @@
         <text x="22" y="29" font-family="Arial, sans-serif" font-size="22" font-weight="900" fill="${cfg.s}" letter-spacing="-1">S</text>
       </svg>`;
     }
-    }
 
     function applyTheme(themeId, save = true) {
       currentTheme = THEMES.some((t) => t.id === themeId) ? themeId : "violet";
@@ -1461,15 +1460,15 @@
     function switchScreen(viewName, title, sub, markImg = null) {
       currentView = viewName;
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
-      document.getElementById(`screen-${viewName}`).classList.add("active");
+      document.getElementById(`screen-${viewName}`)?.classList.add("active");
 
       const mark = document.getElementById("brandMark");
-      mark.innerHTML = markImg ? `<img src="${markImg}" alt="" onerror="this.parentElement.textContent='W'">` : "W";
+      if (mark) mark.innerHTML = generateWSLogo(currentTheme);
       document.getElementById("headerTitle").textContent = title;
       document.getElementById("headerSub").textContent = sub;
 
       const isSub = !["hub", "orders", "profile", "faq"].includes(viewName);
-      document.getElementById("backBtn").classList.toggle("visible", isSub);
+      document.getElementById("backBtn")?.classList.toggle("visible", isSub);
       try { isSub ? tg?.BackButton?.show() : tg?.BackButton?.hide(); } catch (e) {}
 
       const activeTab = isSub ? "hub" : viewName;
