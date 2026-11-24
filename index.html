@@ -259,7 +259,7 @@
     .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); flex-shrink: 0; }
     .live-time { font-size: 11px; color: var(--muted); white-space: nowrap; }
 
-    .filter-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 11px; scrollbar-width: none; }
+    .filter-row { display: flex; gap: 8px; overflow-x: auto; padding: 14px 4px 4px 4px; margin: -10px -4px 11px -4px; scrollbar-width: none; }
     .filter-row::-webkit-scrollbar { display: none; }
     .filter-chip {
       padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border);
@@ -394,13 +394,6 @@
     .item-right { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
     .item-price { font-size: 13.5px; font-weight: 900; text-align: right; }
     .item-subprice { font-size: 10.5px; color: var(--muted); text-align: right; }
-    .mini-bolt {
-      width: 34px; height: 34px; border-radius: 11px;
-      border: 1px solid var(--gold-border); background: var(--gold-bg);
-      color: var(--gold); font-size: 15px;
-      display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
-    }
-
     .field-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
     .field-label { font-size: 12px; color: var(--muted); font-weight: 600; }
     .mini-btn {
@@ -875,9 +868,6 @@
 
     <section id="screen-faq" class="screen">
       <div class="faq-item">
-        <div class="faq-q">Как работает кнопка молнии ⚡ на картинке?</div>
-        <div class="faq-a">Нажми ⚡ на любой карточке подарка, модели или товара — сразу откроется быстрая оплата с выбором способа (Баланс ₽ или Crypto TON).</div>
-      </div>
       <div class="faq-item">
         <div class="faq-q">Как учитывается курс TON / GRAM?</div>
         <div class="faq-a">Расчёт привязан к рублю с учётом текущей просадки TON (~84 ₽) и запасом маржи, чтобы магазин не уходил в минус при колебаниях курса.</div>
@@ -1243,15 +1233,6 @@
         ]
       },
       {
-        id: "gamepass", group: "games", img: "./icons/xbox.png", emoji: "🎮",
-        title: "Xbox Game Pass", desc: "PC Game Pass и Ultimate", fromText: "От 1 190 ₽", badge: "В наличии",
-        items: [
-          { id: "gp_pc_1m", title: "PC Game Pass (1 мес)", sub: "Ключ активации PC Game Pass · В наличии", priceText: "1 190 ₽", rub: 1190, tag: "В наличии", inputLabel: "Ваш @username или email Microsoft", inputPlaceholder: "@username или email", allowSelf: true, action: "openProduct" },
-          { id: "gp_ult_1m", title: "Xbox Game Pass Ultimate (1 мес)", sub: "PC + Console + Cloud · В наличии", priceText: "1 990 ₽", rub: 1990, tag: "В наличии", inputLabel: "Ваш @username или email Microsoft", inputPlaceholder: "@username или email", allowSelf: true, action: "openProduct" },
-          { id: "gp_ult_3m", title: "Xbox Game Pass Ultimate (3 мес)", sub: "Выгодный пакет на 3 месяца · В наличии", priceText: "5 490 ₽", rub: 5490, tag: "В наличии", inputLabel: "Ваш @username или email Microsoft", inputPlaceholder: "@username или email", allowSelf: true, action: "openProduct" }
-        ]
-      },
-      {
         id: "discord", group: "subs", img: "./icons/discord.png", emoji: "👾",
         title: "Discord", desc: "Nitro и бусты сервера", fromText: "От 100 ₽", badge: "В наличии",
         items: [
@@ -1428,19 +1409,19 @@
         violet: {
           bgGrad1: "#6D28D9",
           bgGrad2: "#3F1E6E",
-          border: "rgba(168, 85, 247, 0.8)",
-          glow: "rgba(168, 85, 247, 0.5)",
-          innerGlow: "rgba(192, 132, 252, 0.4)",
+          border: "rgba(168, 85, 247, 0.9)",
+          glow: "rgba(168, 85, 247, 0.6)",
+          innerGlow: "rgba(192, 132, 252, 0.5)",
           w: "#F5F3FF",
           s: "#FFFFFF",
-          shadow: "rgba(109, 40, 217, 0.4)"
+          shadow: "rgba(109, 40, 217, 0.5)"
         },
         sapphire: {
           bgGrad1: "#0F172A",
           bgGrad2: "#1E293B",
-          border: "rgba(56, 189, 248, 0.7)",
-          glow: "rgba(56, 189, 248, 0.4)",
-          innerGlow: "rgba(148, 163, 184, 0.3)",
+          border: "rgba(56, 189, 248, 0.85)",
+          glow: "rgba(56, 189, 248, 0.5)",
+          innerGlow: "rgba(148, 163, 184, 0.4)",
           w: "#E0F2FE",
           s: "#F8FAFC",
           shadow: "rgba(15, 23, 42, 0.5)"
@@ -1448,9 +1429,9 @@
         emerald: {
           bgGrad1: "#064E3B",
           bgGrad2: "#047857",
-          border: "#10B981",
-          glow: "rgba(16, 185, 129, 0.6)",
-          innerGlow: "rgba(52, 211, 153, 0.3)",
+          border: "rgba(16, 185, 129, 0.9)",
+          glow: "rgba(16, 185, 129, 0.7)",
+          innerGlow: "rgba(52, 211, 153, 0.4)",
           w: "#F0FDF4",
           s: "#DCFCE7",
           shadow: "rgba(4, 120, 87, 0.5)"
@@ -1458,16 +1439,16 @@
         ice: {
           bgGrad1: "#F1F5F9",
           bgGrad2: "#E2E8F0",
-          border: "rgba(148, 163, 184, 0.6)",
-          glow: "rgba(226, 232, 240, 0.5)",
-          innerGlow: "rgba(255, 255, 255, 0.6)",
+          border: "rgba(148, 163, 184, 0.7)",
+          glow: "rgba(226, 232, 240, 0.6)",
+          innerGlow: "rgba(255, 255, 255, 0.7)",
           w: "#0F172A",
           s: "#1E40AF",
-          shadow: "rgba(15, 23, 42, 0.2)"
+          shadow: "rgba(15, 23, 42, 0.3)"
         }
       };
       const cfg = configs[theme] || configs.violet;
-      return `<svg width="42" height="42" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 12px ${cfg.shadow});">
+      return `<svg width="42" height="42" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 8px ${cfg.shadow});">
         <defs>
           <linearGradient id="bgGrad-${theme}" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:${cfg.bgGrad1}"/>
@@ -1478,21 +1459,24 @@
             <stop offset="100%" style="stop-color:${cfg.innerGlow};stop-opacity:0"/>
           </radialGradient>
           <filter id="glow-${theme}">
-            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+            <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="neon-${theme}">
+            <feGaussianBlur stdDeviation="0.8" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
         </defs>
-        <!-- Main glass background -->
-        <rect x="1" y="1" width="40" height="40" rx="13" fill="url(#bgGrad-${theme})" stroke="${cfg.border}" stroke-width="1" opacity="0.95" filter="url(#glow-${theme})"/>
-        <!-- Inner highlight -->
-        <ellipse cx="14" cy="14" rx="12" ry="10" fill="url(#highlight-${theme})" opacity="0.6"/>
-        <!-- W letter (Unbounded, bold) -->
-        <text x="10" y="27" font-family="Unbounded, sans-serif" font-size="20" font-weight="700" fill="${cfg.w}" letter-spacing="-0.02em" text-anchor="middle" style="font-kerning: auto;">W</text>
-        <!-- S letter (Unbounded, bold) -->
-        <text x="30" y="27" font-family="Unbounded, sans-serif" font-size="20" font-weight="700" fill="${cfg.s}" letter-spacing="-0.02em" text-anchor="middle">S</text>
+        <rect x="1" y="1" width="40" height="40" rx="13" fill="url(#bgGrad-${theme})" stroke="${cfg.border}" stroke-width="1.2" opacity="0.96" filter="url(#glow-${theme})"/>
+        <ellipse cx="14" cy="12" rx="11" ry="9" fill="url(#highlight-${theme})" opacity="0.5"/>
+        <text x="9.5" y="24" font-family="Unbounded, sans-serif" font-size="16" font-weight="700" fill="${cfg.w}" letter-spacing="0.5" text-anchor="middle" filter="url(#neon-${theme})" style="font-kerning: auto;">W</text>
+        <text x="32.5" y="24" font-family="Unbounded, sans-serif" font-size="16" font-weight="700" fill="${cfg.s}" letter-spacing="0.5" text-anchor="middle" filter="url(#neon-${theme})">S</text>
       </svg>`;
     }
 
@@ -1815,23 +1799,8 @@
               <div class="item-price">${item.priceText}</div>
               <div class="item-subprice">${item.subPriceText || ""}</div>
             </div>
-            ${!isOut && item.rub ? `<button type="button" class="mini-bolt" title="Быстрая покупка">⚡</button>` : ""}
           </div>
         `;
-        const bolt = el.querySelector(".mini-bolt");
-        if (bolt) {
-          bolt.addEventListener("click", (e) => {
-            e.stopPropagation();
-            haptic("medium");
-            openCheckout({
-              mode: "product",
-              label: item.title,
-              rub: item.rub,
-              ton: item.ton,
-              target: item.allowSelf && tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : ""
-            });
-          });
-        }
         el.addEventListener("click", () => {
           haptic("light");
           if (item.action === "openStars") { switchScreen("stars", "Telegram Stars", `${cat.title} · Выбор пакета`, cat.img); return; }
