@@ -551,10 +551,34 @@
       width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--border);
       background: var(--field); color: var(--text); display: flex; align-items: center;
       justify-content: space-between; gap: 10px; cursor: pointer; text-align: left; margin-bottom: 9px;
+      transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1);
     }
+    .pay-choice-btn:hover { transform: translateY(-2px); background: var(--glass-strong); }
+    .pay-choice-btn:active { transform: scale(0.97); }
     .pay-choice-left { display: flex; align-items: center; gap: 11px; }
     .pay-choice-icon { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 900; background: var(--accent-soft); border: 1px solid var(--border-strong); }
-  </style>
+
+    /* Smooth animations */
+    button, .hero-btn, .dock-btn { transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+    button:hover, .hero-btn:hover, .dock-btn:hover { transform: translateY(-2px); }
+    button:active, .hero-btn:active, .dock-btn:active { transform: scale(0.97); }
+
+    .glass-card { transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .glass-card:hover { transform: translateY(-4px); }
+
+    .screen { animation: screenFadeIn 300ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    @keyframes screenFadeIn {
+      0% { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Theme transitions */
+    html[data-theme] { transition: --bg 400ms ease, --accent 400ms ease; }
+    .brand-mark { transition: filter 400ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .hero-card { transition: all 400ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .theme-option { transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .theme-option.active { transform: scale(1.06); }
+</style>
   <!-- Performance Optimizations CSS -->
   <link rel="stylesheet" href="performance-optimizations.css">
 </head>
@@ -1344,9 +1368,24 @@
     }
 
     let currentTheme = localStorage.getItem(CONFIG.THEME_KEY) || "violet";
+
+    // Generate theme-specific SVG WS logo
+    function generateWSLogo(theme) {
+      const configs = {
+        violet: { c1: "#8B5CF6", c2: "#6D28D9", c3: "#C084FC", glow: "rgba(168,85,247,0.4)" },
+        sapphire: { c1: "#1E293B", c2: "#0F172A", c3: "#CBD5E1", glow: "rgba(56,189,248,0.3)" },
+        emerald: { c1: "#10B981", c2: "#047857", c3: "#34D399", glow: "rgba(16,185,129,0.4)" },
+        ice: { c1: "#FFFFFF", c2: "#E2E8F0", c3: "#94A3B8", glow: "rgba(226,232,240,0.2)" }
+      };
+      const cfg = configs[theme] || configs.violet;
+      return `<svg width="32" height="32" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 6px ${cfg.glow})"><defs><linearGradient id="gw" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:${cfg.c1}"/><stop offset="100%" style="stop-color:${cfg.c3}"/></linearGradient><linearGradient id="gs" x1="100%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:${cfg.c3}"/><stop offset="100%" style="stop-color:${cfg.c2}"/></linearGradient></defs><text x="30" y="90" font-size="72" font-weight="900" fill="url(#gw)">W</text><text x="80" y="90" font-size="72" font-weight="900" fill="url(#gs)">S</text></svg>`;
+    }
+
     function applyTheme(themeId, save = true) {
       currentTheme = THEMES.some((t) => t.id === themeId) ? themeId : "violet";
       document.documentElement.setAttribute("data-theme", currentTheme);
+      const mark = document.getElementById("brandMark");
+      if (mark) mark.innerHTML = generateWSLogo(currentTheme);
       if (save) localStorage.setItem(CONFIG.THEME_KEY, currentTheme);
       renderThemePickers();
     }
