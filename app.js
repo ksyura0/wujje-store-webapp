@@ -76,7 +76,7 @@
     // They are set to window scope and available globally
 
     // Build PACKAGES with TON conversion from catalog.js PACKAGES_BASE
-    window.PACKAGES = ((window.PACKAGES_BASE && window.PACKAGES_BASE.length) ? window.PACKAGES_BASE : [{stars:50,rub:77},{stars:100,rub:152},{stars:150,rub:225},{stars:250,rub:370},{stars:350,rub:515},{stars:500,rub:730},{stars:750,rub:1085},{stars:1000,rub:1430},{stars:1500,rub:2130},{stars:2500,rub:3500},{stars:5000,rub:6950},{stars:10000,rub:13700}]).map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
+    window.PACKAGES = [{stars:50,rub:77},{stars:100,rub:152},{stars:150,rub:225},{stars:250,rub:370},{stars:350,rub:515},{stars:500,rub:730},{stars:750,rub:1085},{stars:1000,rub:1430},{stars:1500,rub:2130},{stars:2500,rub:3500},{stars:5000,rub:6950},{stars:10000,rub:13700}].map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
 
     // Build NFT collections and CATEGORIES from catalog data
     window.CATEGORIES = [
