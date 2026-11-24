@@ -480,7 +480,7 @@
       100% { transform: scale(1); opacity: 1; }
     }
   </style>
-  <script src="app.js?v=20261124_12" defer></script>
+  <script src="app.js?v=20261124_15" defer></script>
   <script>
   // Live gifts catalog integration - runs after main app initialization
   function resolveGiftArtwork(item, fallbackSvg) {
@@ -701,15 +701,15 @@
 
   // Пробрасываем giftId в openCheckout и при оплате с баланса вызываем /api/pay_balance
   function setupOpenCheckoutWrapper() {
-    if (typeof openCheckout === 'undefined' || typeof currentCheckoutItem === 'undefined') {
+    if (typeof window.openCheckout === 'undefined' || typeof window.currentCheckoutItem === 'undefined') {
       setTimeout(setupOpenCheckoutWrapper, 50);
       return;
     }
-    const origOpenCheckout = openCheckout;
-    openCheckout = function (opts) {
+    const origOpenCheckout = window.openCheckout;
+    window.openCheckout = function (opts) {
       origOpenCheckout(opts);
-      if (currentCheckoutItem) {
-        currentCheckoutItem.giftId = String(opts?.giftId || "");
+      if (window.currentCheckoutItem) {
+        window.currentCheckoutItem.giftId = String(opts?.giftId || "");
       }
     };
   }
