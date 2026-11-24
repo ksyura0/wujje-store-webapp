@@ -1278,6 +1278,18 @@
           { id: "ai_perplexity", title: "Perplexity Pro (1 мес)", sub: "Лучший поиск с AI · В наличии", priceText: "290 ₽", rub: 290, tag: "В наличии", inputLabel: "Email Perplexity", inputPlaceholder: "user@example.com", allowSelf: true, action: "openProduct" },
           { id: "ai_openai_credits", title: "OpenAI API Credits ($10)", sub: "Пополнение баланса · В наличии", priceText: "790 ₽", rub: 790, tag: "В наличии", inputLabel: "Email OpenAI", inputPlaceholder: "user@example.com", allowSelf: true, action: "openProduct" }
         ]
+      },
+      {
+        id: "steam", group: "games", img: "./icons/steam.png", emoji: "🎮",
+        title: "Пополнение Steam", desc: "Автозачисление по логину · РФ / КЗ / УА / СНГ", fromText: "От 100 ₽", badge: "Автовыдача 24/7",
+        items: [
+          { id: "steam_100", title: "100 ₽ пополнения Steam", sub: "Автозачисление за 1–3 минуты · Рублевый аккаунт", priceText: "109 ₽", rub: 100, tag: "Популярно", inputLabel: "Логин Steam", inputPlaceholder: "steam_username", allowSelf: false, action: "openProduct" },
+          { id: "steam_250", title: "250 ₽ пополнения Steam", sub: "Автозачисление за 1–3 минуты · Рублевый аккаунт", priceText: "273 ₽", rub: 250, tag: "Популярно", inputLabel: "Логин Steam", inputPlaceholder: "steam_username", allowSelf: false, action: "openProduct" },
+          { id: "steam_500", title: "500 ₽ пополнения Steam", sub: "Автозачисление за 1–3 минуты · Рублевый аккаунт", priceText: "545 ₽", rub: 500, tag: "Выгодно", inputLabel: "Логин Steam", inputPlaceholder: "steam_username", allowSelf: false, action: "openProduct" },
+          { id: "steam_1000", title: "1 000 ₽ пополнения Steam", sub: "Автозачисление за 1–3 минуты · Рублевый аккаунт", priceText: "1 090 ₽", rub: 1000, tag: "Выгодно", inputLabel: "Логин Steam", inputPlaceholder: "steam_username", allowSelf: false, action: "openProduct" },
+          { id: "steam_2500", title: "2 500 ₽ пополнения Steam", sub: "Автозачисление за 1–3 минуты · Рублевый аккаунт", priceText: "2 725 ₽", rub: 2500, tag: "Выгодно", inputLabel: "Логин Steam", inputPlaceholder: "steam_username", allowSelf: false, action: "openProduct" },
+          { id: "steam_5000", title: "5 000 ₽ пополнения Steam", sub: "Автозачисление за 1–3 минуты · Рублевый аккаунт", priceText: "5 450 ₽", rub: 5000, tag: "Выгодно", inputLabel: "Логин Steam", inputPlaceholder: "steam_username", allowSelf: false, action: "openProduct" }
+        ]
       }
     ].map((cat) => ({
       ...cat,
@@ -2116,6 +2128,64 @@
 
         currentProductFormData.getData = () => input.value.trim();
       }
+      // Steam - login & region selector
+      else if (categoryId === "steam") {
+        const loginLabel = document.createElement("label");
+        loginLabel.className = "field-label";
+        loginLabel.textContent = "Логин аккаунта Steam";
+        loginLabel.style.display = "block";
+        loginLabel.style.marginBottom = "4px";
+
+        const loginInput = document.createElement("input");
+        loginInput.type = "text";
+        loginInput.className = "input";
+        loginInput.placeholder = "your_steam_login";
+        loginInput.id = "steamLoginInput";
+        loginInput.autocomplete = "off";
+
+        const loginHint = document.createElement("div");
+        loginHint.style.fontSize = "11px";
+        loginHint.style.color = "var(--muted)";
+        loginHint.style.marginTop = "6px";
+        loginHint.style.marginBottom = "14px";
+        loginHint.textContent = "💡 Это логин для входа в Steam, не никнейм профиля";
+
+        const regionLabel = document.createElement("label");
+        regionLabel.className = "field-label";
+        regionLabel.textContent = "Регион / валюта аккаунта";
+        regionLabel.style.display = "block";
+        regionLabel.style.marginBottom = "8px";
+
+        const regionSelect = document.createElement("select");
+        regionSelect.className = "input";
+        regionSelect.id = "steamRegionSelect";
+        regionSelect.style.cursor = "pointer";
+
+        const regions = [
+          { code: "RUB", name: "🇷🇺 Россия (RUB)" },
+          { code: "KZT", name: "🇰🇿 Казахстан (KZT)" },
+          { code: "UAH", name: "🇺🇦 Украина (UAH)" },
+          { code: "USD", name: "🌐 СНГ / Другое (USD)" }
+        ];
+
+        regions.forEach((r) => {
+          const opt = document.createElement("option");
+          opt.value = r.code;
+          opt.textContent = r.name;
+          regionSelect.appendChild(opt);
+        });
+
+        container.appendChild(loginLabel);
+        container.appendChild(loginInput);
+        container.appendChild(loginHint);
+        container.appendChild(regionLabel);
+        container.appendChild(regionSelect);
+
+        currentProductFormData.getData = () => ({
+          steam_login: loginInput.value.trim(),
+          currency: regionSelect.value
+        });
+      }
       // Default fallback for other categories
       else {
         const input = document.createElement("input");
@@ -2153,8 +2223,37 @@
         document.getElementById("productStatusNote").textContent = "Укажи данные для выдачи.";
         return;
       }
-      let target = typeof formData === "string" ? formData : JSON.stringify(formData);
-      openCheckout({ mode: "product", label: selectedProduct.title, rub: selectedProduct.rub, ton: selectedProduct.ton, target });
+
+      // Steam: special handling with price recalc
+      if (selectedProductCategory === "steam") {
+        const steamData = formData;
+        if (!steamData.steam_login || steamData.steam_login.length < 2) {
+          document.getElementById("productStatusNote").textContent = "Укажи корректный логин Steam.";
+          return;
+        }
+
+        const baseAmount = selectedProduct.rub;
+        const needRub = Math.ceil(baseAmount * 1.09);
+        const needTon = rubToTonSafe(needRub);
+
+        const finalTarget = JSON.stringify({
+          steam_login: steamData.steam_login,
+          currency: steamData.currency,
+          amount_rub: baseAmount,
+          need_rub: needRub
+        });
+
+        openCheckout({
+          mode: "product",
+          label: `${selectedProduct.title} (${steamData.currency})`,
+          rub: needRub,
+          ton: needTon,
+          target: finalTarget
+        });
+      } else {
+        let target = typeof formData === "string" ? formData : JSON.stringify(formData);
+        openCheckout({ mode: "product", label: selectedProduct.title, rub: selectedProduct.rub, ton: selectedProduct.ton, target });
+      }
     });
 
     const targetInput = document.getElementById("targetUsername");
@@ -2707,14 +2806,61 @@
 
         st.textContent = "Проводим оплату...";
 
-        if (checkoutMode === "stars" && resolvedRecipient) {
+        // Steam category: special API endpoint
+        if (selectedProductCategory === "steam") {
+          const steamData = JSON.parse(recipient);
+          const needRub = Math.ceil(steamData.amount_rub * 1.09);
+
+          if (rubBalance < needRub) throw new Error(`Недостаточно средств (нужно ${fmt(needRub)} ₽, имеется ${fmt(rubBalance)} ₽)`);
+
+          const steamOrder = {
+            initData: tg?.initData || "",
+            steam_login: steamData.steam_login,
+            currency: steamData.currency,
+            amount_rub: steamData.amount_rub,
+            need_rub: needRub
+          };
+
+          st.textContent = "Отправляем заказ на выкуп...";
+          const response = await fetch("/api/order/steam", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(steamOrder)
+          });
+
+          const d = await response.json();
+          if (!d?.ok) throw new Error(d?.error || "Ошибка при обработке Steam заказа");
+
+          setRubBalance(rubBalance - needRub, true);
+          saveOrder({
+            id: orderId,
+            itemLabel: `💾 Steam пополнение ${needRub} ₽`,
+            target: steamData.steam_login,
+            rubAmount: needRub,
+            priceLabel: `${fmt(needRub)} ₽`,
+            method: "Баланс ₽",
+            statusText: "⏳ Выполняется",
+            dateText: new Date().toLocaleString("ru-RU")
+          });
+
+          st.textContent = "✅ Заказ принят! Автопополнение Steam запущено, зачисление займёт 1–3 минуты";
+
+          setTimeout(() => {
+            payModal.classList.remove("open");
+            st.textContent = "";
+          }, 3000);
+        }
+        // Telegram Stars
+        else if (checkoutMode === "stars" && resolvedRecipient) {
           const d = await withTimeout(API.payWithBalance(tg?.initData || "", selectedPackage.stars, recipient));
           if (!d?.ok) throw new Error(d?.error || "Ошибка сервера");
           setRubBalance(d.balance, true);
           saveOrder({ id: d.order_id, stars: selectedPackage.stars, itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "✅ Оплачен", dateText: new Date().toLocaleString("ru-RU") });
           payModal.classList.remove("open");
           st.textContent = "";
-        } else {
+        }
+        // Other products
+        else {
           setRubBalance(rubBalance - rub, true);
           saveOrder({ id: orderId, itemLabel: currentCheckoutItem.label, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "✅ Оплачен", dateText: new Date().toLocaleString("ru-RU") });
           payModal.classList.remove("open");
