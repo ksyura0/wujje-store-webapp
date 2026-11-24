@@ -2304,6 +2304,31 @@
       openCheckout({ mode: "stars", label: `⭐ ${fmt(selectedPackage.stars)} Stars`, rub: selectedPackage.rub, ton: selectedPackage.ton, target: info.username });
     });
 
+    // ===== BLOCK 5: Payment Security =====
+    const __payments = new Map();
+    const __timeout = 30000;
+    function __validateOrder(o) {
+      if (!o?.id) throw new Error("Missing ID");
+      if ((o.rub || 0) + (o.ton || 0) <= 0) throw new Error("Invalid amount");
+      return true;
+    }
+    function __checkDupe(id) {
+      const now = Date.now(), key = `${id}_${Math.floor(now/60000)}`;
+      if (__payments.has(key) && now - __payments.get(key) < 2000) throw new Error("Already processing");
+      __payments.set(key, now);
+      return true;
+    }
+    function __timeout(p, ms = __timeout) {
+      return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), ms))]);
+    }
+    function __logErr(id, e) {
+      console.error("[Err]", id, e?.message);
+      const logs = JSON.parse(localStorage.getItem("logs") || "[]");
+      logs.push({id, msg: e?.message, ts: Date.now()});
+      localStorage.setItem("logs", JSON.stringify(logs.slice(-10)));
+    }
+    // ===== END BLOCK 5 =====
+
     document.getElementById("payWithBalanceBtn").addEventListener("click", async () => {
       const st = document.getElementById("payModalStatus");
       const recipient = quickRecipientInput.value.trim();
