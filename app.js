@@ -88,6 +88,16 @@
       window.PACKAGES = PACKAGES_FALLBACK.map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
     }
 
+    // Build NFT collections from RAW_122_GIFTS
+    window.NFT_COLLECTIONS = (window.RAW_122_GIFTS || []).map(([title, floorTon]) => ({
+      title,
+      floorTon: Math.max(0.1, Number(floorTon) / 1000),
+      floorRub: tonFloorToRub(Math.max(0.1, Number(floorTon) / 1000)),
+      symbol: window.PALETTES?.[Math.floor(Math.random() * 5)]?.[2] || "🎁",
+      bgHex: window.PALETTES?.[Math.floor(Math.random() * 5)]?.[0] || "#17112e",
+      accentHex: window.PALETTES?.[Math.floor(Math.random() * 5)]?.[1] || "#a855f7"
+    }));
+
     // Build NFT collections and CATEGORIES from catalog data
     window.CATEGORIES = [
       {
@@ -534,7 +544,8 @@
 
     function renderCategories() {
       const grid = document.getElementById("categoriesGrid");
-      const list = activeFilter === "all" ? CATEGORIES : CATEGORIES.filter((c) => c.group === activeFilter);
+      const catList = window.CATEGORIES || [];
+      const list = activeFilter === "all" ? catList : catList.filter((c) => c.group === activeFilter);
       grid.innerHTML = "";
       list.forEach((cat) => {
         const card = document.createElement("button");
@@ -1913,5 +1924,13 @@
     renderPackages();
     syncBalance();
     syncReferralInfo();
+
+    // Hide preloader after 350ms
+    setTimeout(() => {
+      const loader = document.getElementById("appLoader");
+      if (loader) {
+        loader.classList.add("hidden");
+      }
+    }, 350);
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
