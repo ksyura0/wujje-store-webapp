@@ -1,5 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
-    window.debugLog = function(msg) {
+﻿    window.debugLog = function(msg) {
       console.log("[Wujje Debug]", msg);
     };
 
@@ -1910,5 +1909,3 @@ document.addEventListener("DOMContentLoaded", function() {
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
   });
-});
-
