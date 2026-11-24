@@ -184,8 +184,12 @@
     .back-btn.visible { display: inline-flex; }
 
     .brand-mark {
-      width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
-      display: inline-flex; align-items: center; justify-content: center;
+      width: 42px !important; height: 42px !important; border-radius: 13px !important; flex-shrink: 0;
+      display: inline-flex !important; align-items: center !important; justify-content: center !important;
+      font-family: "Unbounded", sans-serif !important; font-weight: 700 !important; font-size: 13.5px !important;
+      background: linear-gradient(135deg, var(--accent-soft), rgba(255, 255, 255, 0.06)) !important;
+      border: 1.5px solid var(--border-strong) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 14px var(--accent-glow) !important;
       overflow: visible;
     }
     .brand-mark svg { width: 100%; height: 100%; }
