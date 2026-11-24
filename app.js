@@ -88,6 +88,11 @@
       window.PACKAGES = PACKAGES_FALLBACK.map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
     }
 
+    // Guarantee PACKAGES is accessible locally
+    const PACKAGES = window.PACKAGES && Array.isArray(window.PACKAGES) && window.PACKAGES.length > 0
+      ? window.PACKAGES
+      : PACKAGES_FALLBACK.map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
+
     // Build NFT collections from RAW_122_GIFTS
     window.NFT_COLLECTIONS = (window.RAW_122_GIFTS || []).map(([title, floorTon]) => ({
       title,
@@ -1154,6 +1159,18 @@
     const targetInput = document.getElementById("targetUsername");
     const customStarsInput = document.getElementById("customStarsInput");
 
+    // Auto-populate @username for targetInput if available from Telegram
+    if (targetInput) {
+      targetInput.addEventListener("focus", () => {
+        if (!targetInput.value.trim()) {
+          const tgUsername = tg?.initDataUnsafe?.user?.username;
+          if (tgUsername) {
+            targetInput.value = `@${tgUsername}`;
+          }
+        }
+      });
+    }
+
     function applyCustomStars(val) {
       const n = Math.max(1, Math.min(100000, Math.round(Number(val) || 50)));
       const idx = PACKAGES.findIndex((p) => p.stars === n);
@@ -1932,5 +1949,14 @@
         loader.classList.add("hidden");
       }
     }, 350);
+
+    // Fallback: force hide preloader after 1500ms even if network is slow
+    setTimeout(() => {
+      const loader = document.getElementById("appLoader");
+      if (loader) {
+        loader.style.opacity = "0";
+        loader.style.pointerEvents = "none";
+      }
+    }, 1500);
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
