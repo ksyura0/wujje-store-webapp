@@ -9,7 +9,7 @@ const CONFIG = {
   SAFE_MARKUP: 1.12,
 
   // API Configuration
-  API_BASE: "https://trycloudflare.com",
+  API_BASE: "https://rotary-out-earlier-loves.trycloudflare.com",
   DEFAULT_PAY_URL: "https://t.tb.ru/pm_short/2L0Yb9q9Ehb",
 
   // Blockchain
