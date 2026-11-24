@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Wujje Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <style>
@@ -147,7 +150,8 @@
       min-height: 100vh;
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Inter, sans-serif;
+      font-family: "Onest", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      font-weight: 400;
       overflow-x: hidden;
       transition: background 0.38s ease, color 0.3s ease;
     }
@@ -185,8 +189,11 @@
       overflow: visible;
     }
     .brand-mark svg { width: 100%; height: 100%; }
-    .brand-title { font-size: 16.5px; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brand-title { font-family: "Unbounded", sans-serif; font-size: 16.5px; font-weight: 700; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.02em; }
     .brand-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Price styling with tabular numbers */
+    .price-num, .cs-rub, .cs-ton, [id*="balanceText"], [id*="Rub"], [id*="Ton"] { font-variant-numeric: tabular-nums; font-family: "Onest", monospace; font-weight: 600; }
 
     .balance-pill {
       position: relative; display: inline-flex; align-items: center; gap: 7px;
@@ -577,6 +584,21 @@
     .theme-option { transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1); }
     .theme-option.active { transform: scale(1.06); }
     .brand-mark svg { transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+    /* Responsive typography for small screens (375px-430px) */
+    @media (max-width: 430px) {
+      .brand-title { font-size: 15px; }
+      .brand-sub { font-size: 10px; }
+      h2, h3 { font-size: 16px !important; letter-spacing: -0.01em; }
+      .price-num, .cs-rub, .cs-ton { font-size: 14px; }
+    }
+
+    @media (max-width: 375px) {
+      .brand-title { font-size: 14px; }
+      .brand-sub { font-size: 9px; }
+      h2 { font-size: 14px !important; }
+      .topbar-left { gap: 7px; }
+    }
 </style>
   <!-- Performance Optimizations CSS -->
   <link rel="stylesheet" href="performance-optimizations.css">
@@ -1368,52 +1390,79 @@
 
     let currentTheme = localStorage.getItem(CONFIG.THEME_KEY) || "violet";
 
-    // Generate theme-specific SVG WS logo with high contrast
+    // Generate premium glass-morphic WS logo with Unbounded font
     function generateWSLogo(theme) {
       const configs = {
         violet: {
-          bg: "rgba(99, 102, 241, 0.3)",
-          border: "rgba(168, 85, 247, 0.6)",
-          w: "#F0E7FF",
+          bgGrad1: "#6D28D9",
+          bgGrad2: "#3F1E6E",
+          border: "rgba(168, 85, 247, 0.8)",
+          glow: "rgba(168, 85, 247, 0.5)",
+          innerGlow: "rgba(192, 132, 252, 0.4)",
+          w: "#F5F3FF",
           s: "#FFFFFF",
-          shadow: "rgba(168, 85, 247, 0.3)"
+          shadow: "rgba(109, 40, 217, 0.4)"
         },
         sapphire: {
-          bg: "rgba(14, 165, 233, 0.25)",
-          border: "rgba(56, 189, 248, 0.5)",
-          w: "#CBD5E1",
-          s: "#FFFFFF",
-          shadow: "rgba(56, 189, 248, 0.25)"
+          bgGrad1: "#0F172A",
+          bgGrad2: "#1E293B",
+          border: "rgba(56, 189, 248, 0.7)",
+          glow: "rgba(56, 189, 248, 0.4)",
+          innerGlow: "rgba(148, 163, 184, 0.3)",
+          w: "#E0F2FE",
+          s: "#F8FAFC",
+          shadow: "rgba(15, 23, 42, 0.5)"
         },
         emerald: {
-          bg: "rgba(16, 185, 129, 0.2)",
+          bgGrad1: "#064E3B",
+          bgGrad2: "#047857",
           border: "#10B981",
-          w: "#FFFFFF",
-          s: "#A7F3D0",
-          shadow: "rgba(16, 185, 129, 0.4)"
+          glow: "rgba(16, 185, 129, 0.6)",
+          innerGlow: "rgba(52, 211, 153, 0.3)",
+          w: "#F0FDF4",
+          s: "#DCFCE7",
+          shadow: "rgba(4, 120, 87, 0.5)"
         },
         ice: {
-          bg: "rgba(255, 255, 255, 0.4)",
-          border: "rgba(226, 232, 240, 0.6)",
+          bgGrad1: "#F1F5F9",
+          bgGrad2: "#E2E8F0",
+          border: "rgba(148, 163, 184, 0.6)",
+          glow: "rgba(226, 232, 240, 0.5)",
+          innerGlow: "rgba(255, 255, 255, 0.6)",
           w: "#0F172A",
-          s: "#2563EB",
-          shadow: "rgba(0, 0, 0, 0.1)"
+          s: "#1E40AF",
+          shadow: "rgba(15, 23, 42, 0.2)"
         }
       };
       const cfg = configs[theme] || configs.violet;
-      return `<svg width="42" height="42" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="42" height="42" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 12px ${cfg.shadow});">
         <defs>
-          <filter id="shadow-${theme}">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+          <linearGradient id="bgGrad-${theme}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:${cfg.bgGrad1}"/>
+            <stop offset="100%" style="stop-color:${cfg.bgGrad2}"/>
+          </linearGradient>
+          <radialGradient id="highlight-${theme}">
+            <stop offset="0%" style="stop-color:${cfg.innerGlow}"/>
+            <stop offset="100%" style="stop-color:${cfg.innerGlow};stop-opacity:0"/>
+          </radialGradient>
+          <filter id="glow-${theme}">
+            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
           </filter>
         </defs>
-        <!-- Glass badge background -->
-        <rect x="1" y="1" width="40" height="40" rx="10" fill="${cfg.bg}" stroke="${cfg.border}" stroke-width="1.5" filter="url(#shadow-${theme})"/>
-        <!-- W letter -->
-        <text x="8" y="29" font-family="Arial, sans-serif" font-size="22" font-weight="900" fill="${cfg.w}" letter-spacing="-1">W</text>
-        <!-- S letter -->
-        <text x="22" y="29" font-family="Arial, sans-serif" font-size="22" font-weight="900" fill="${cfg.s}" letter-spacing="-1">S</text>
+        <!-- Main glass background -->
+        <rect x="1" y="1" width="40" height="40" rx="13" fill="url(#bgGrad-${theme})" stroke="${cfg.border}" stroke-width="1" opacity="0.95" filter="url(#glow-${theme})"/>
+        <!-- Inner highlight -->
+        <ellipse cx="14" cy="14" rx="12" ry="10" fill="url(#highlight-${theme})" opacity="0.6"/>
+        <!-- W letter (Unbounded, bold) -->
+        <text x="10" y="27" font-family="Unbounded, sans-serif" font-size="20" font-weight="700" fill="${cfg.w}" letter-spacing="-0.02em" text-anchor="middle" style="font-kerning: auto;">W</text>
+        <!-- S letter (Unbounded, bold) -->
+        <text x="30" y="27" font-family="Unbounded, sans-serif" font-size="20" font-weight="700" fill="${cfg.s}" letter-spacing="-0.02em" text-anchor="middle">S</text>
       </svg>`;
+    }
     }
 
     function applyTheme(themeId, save = true) {
