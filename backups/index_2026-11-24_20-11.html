@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="violet">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Wujje Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <script src="catalog.js" defer></script>
+</head>
+<body>
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div id="app" class="app">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button id="backBtn" class="back-btn" type="button">←</button>
+        <div id="brandMark" class="brand-mark">WS</div>
+        <div style="min-width:0;">
+          <div id="headerTitle" class="brand-title">Wujje Store</div>
+          <div id="headerSub" class="brand-sub">Выдача 24/7 · В наличии</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div id="rubPill" class="balance-pill">
+          <span id="rubBalanceText">0 ₽</span>
+          <button id="openTopupBtn" class="balance-plus" type="button">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wallet-bar">
+      <div id="ton-connect-btn"></div>
+    </div>
+
+    <section id="screen-hub" class="screen active">
+      <div class="hero-card">
+        <div>
+          <div class="hero-title">Stars, NFT и подписки</div>
+          <div class="hero-sub">СБП / баланс (₽) и TON Connect · Выдача 24/7</div>
+        </div>
+        <button id="heroQuickStarsBtn" class="hero-btn" type="button">Купить Stars ⭐</button>
+      </div>
+
+      <div class="live-strip">
+        <div class="live-left">
+          <span class="live-dot"></span>
+          <span id="liveFeedText">В наличии: Snoop Doggs, 122 NFT-коллекции, Stars, Roblox, Minecraft</span>
+        </div>
+        <span id="liveFeedTime" class="live-time">онлайн</span>
+      </div>
+
+      <div style="padding: 12px 4px; display:flex; gap:8px; align-items:center;">
+        <span style="font-size:18px;">🔍</span>
+        <input id="productSearchInput" type="text" class="input" placeholder="Поиск по товарам и сервисам..." autocomplete="off" style="flex:1; margin:0;" />
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-chip active" type="button" data-filter="all">Все</button>
+        <button class="filter-chip" type="button" data-filter="telegram">Telegram</button>
+        <button class="filter-chip" type="button" data-filter="nft">NFT подарки</button>
+        <button class="filter-chip" type="button" data-filter="games">Игры &amp; Game Pass</button>
+        <button class="filter-chip" type="button" data-filter="subs">Подписки</button>
+      </div>
+
+      <div class="glass-card custom-stars-card">
+        <div class="cs-head">
+          <div>
+            <div class="cs-title">✨ Своё кол-во Stars</div>
+            <div class="cs-sub">Любое число · быстрая покупка по @username</div>
+          </div>
+          <span class="cs-badge">В наличии</span>
+        </div>
+        <div class="cs-row">
+          <input id="hubCustomStars" class="cs-input" type="number" min="1" max="100000" value="350" />
+          <div class="cs-quote">
+            <div id="hubQuoteRub" class="cs-rub">675 ₽</div>
+            <div id="hubQuoteTon" class="cs-ton">8.04 TON</div>
+          </div>
+        </div>
+        <div class="quick-row">
+          <button class="quick-btn hub-add" type="button" data-add="50">+50</button>
+          <button class="quick-btn hub-add" type="button" data-add="100">+100</button>
+          <button class="quick-btn hub-add" type="button" data-add="500">+500</button>
+          <button class="quick-btn hub-add" type="button" data-add="1000">+1 000</button>
+        </div>
+        <button id="hubGoStarsBtn" class="secondary-btn" type="button" style="margin-top:10px; border-color: var(--gold-border); color: var(--gold);">
+          Оформить выбранное количество →
+        </button>
+      </div>
+
+      <div id="categoriesGrid" class="categories-grid"></div>
+    </section>
+
+    <section id="screen-nft-list" class="screen">
+      <div class="glass-card nft-search-box">
+        <input id="nftSearchInput" class="input" type="text" placeholder="Поиск среди 122 NFT-коллекций (Snoop Doggs, Calendar, Pepe...)" autocomplete="off" />
+        <div style="font-size:11px; color:var(--muted); margin-top:7px;">
+          Флор указан с запасом под курс TON (~84 ₽) и маркеты (Fragment / Portals / Tonnel / MRKT). Редкие модели стоят дороже базового флора.
+        </div>
+      </div>
+      <div id="nftCollectionsGrid" class="nft-grid"></div>
+    </section>
+
+    <section id="screen-nft-models" class="screen">
+      <div class="glass-card" style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <div>
+            <div id="nftColTitle" style="font-size:16.5px; font-weight:900;">Коллекция</div>
+            <div id="nftColFloorInfo" style="font-size:12px; color:var(--muted); margin-top:3px;"></div>
+          </div>
+          <span class="tag-pill">В наличии</span>
+        </div>
+      </div>
+      <div id="nftModelsContainer"></div>
+    </section>
+
+    <section id="screen-category" class="screen">
+      <div id="categoryItems" class="items-list"></div>
+    </section>
+
+    <section id="screen-product" class="screen">
+      <div class="glass-card">
+        <div class="field-top">
+          <span class="field-label">Выбранная позиция</span>
+          <span id="productStockTag" class="tag-pill">В наличии</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div>
+            <div id="productTitle" style="font-size:17px; font-weight:900;">Товар</div>
+            <div id="productDesc" style="font-size:12px; color:var(--muted); margin-top:4px;">Описание</div>
+          </div>
+          <div style="text-align:right; white-space:nowrap;">
+            <div id="productRub" style="font-size:17px; font-weight:900;">0 ₽</div>
+            <div id="productTon" style="font-size:12px; color:var(--muted);">0 TON</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="field-top">
+          <label id="productInputLabel" class="field-label">Данные для выдачи</label>
+          <div id="productQuickBtns" style="display:flex; gap:6px;"></div>
+        </div>
+        <div id="productFormContainer"></div>
+      </div>
+
+      <button id="proceedProductPayBtn" class="primary-btn" type="button">⚡ Быстрая оплата</button>
+      <div id="productStatusNote" class="status-note"></div>
+    </section>
+
+    <section id="screen-stars" class="screen">
+      <div class="glass-card">
+        <div class="field-top">
+          <label class="field-label" for="targetUsername">Кому отправить Stars (@username)</label>
+          <div style="display:flex; gap:6px;">
+            <button id="fillSelfBtn" class="mini-btn" type="button">Себе</button>
+            <button id="clearUsernameBtn" class="mini-btn" type="button">Очистить</button>
+          </div>
+        </div>
+        <input id="targetUsername" class="input" type="text" placeholder="@durov" autocomplete="off" />
+        <div id="recentUsernamesBox" class="recent-chips"></div>
+
+        <div id="userPreview" class="user-preview">
+          <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+            <div id="userAvatar" class="user-avatar">?</div>
+            <div>
+              <div id="userFullName" style="font-size:13.5px; font-weight:800;"></div>
+              <div id="userHandle" style="font-size:12px; color:var(--muted);"></div>
+            </div>
+          </div>
+          <div id="userStatusTag" style="font-size:11.5px; font-weight:800;"></div>
+        </div>
+      </div>
+
+      <div class="glass-card custom-stars-card">
+        <div class="cs-head">
+          <div class="cs-title">✨ Своё кол-во Stars</div>
+          <span class="cs-badge">Любое число</span>
+        </div>
+        <div class="cs-row">
+          <input id="customStarsInput" class="cs-input" type="number" min="1" max="100000" placeholder="350" />
+          <div class="cs-quote">
+            <div id="customQuoteRub" class="cs-rub">— ₽</div>
+            <div id="customQuoteTon" class="cs-ton">— TON</div>
+          </div>
+        </div>
+        <div class="quick-row">
+          <button class="quick-btn stars-add" type="button" data-add="50">+50</button>
+          <button class="quick-btn stars-add" type="button" data-add="100">+100</button>
+          <button class="quick-btn stars-add" type="button" data-add="500">+500</button>
+          <button class="quick-btn stars-add" type="button" data-add="1000">+1 000</button>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="field-top">
+          <span class="field-label">Готовые пакеты</span>
+          <span class="tag-pill">В наличии</span>
+        </div>
+        <div id="packagesGrid" class="packages-grid"></div>
+        <div id="balanceCapacityHint" style="margin-top:10px; font-size:11.5px; color:var(--muted);"></div>
+      </div>
+
+      <button id="proceedPayBtn" class="primary-btn" type="button">⚡ Перейти к оплате</button>
+      <div id="statusNote" class="status-note"></div>
+    </section>
+
+    <section id="screen-orders" class="screen">
+      <div class="glass-card">
+        <div class="field-top">
+          <span class="field-label">История твоих заказов</span>
+          <button id="clearOrdersBtn" class="mini-btn" type="button">Очистить</button>
+        </div>
+        <div id="ordersList"></div>
+      </div>
+    </section>
+
+    <section id="screen-profile" class="screen">
+      <div class="glass-card">
+        <div class="profile-head">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div id="profileAvatar" class="profile-avatar">W</div>
+            <div>
+              <div id="profileName" style="font-size:16px; font-weight:900;">Покупатель</div>
+              <div id="profileHandle" style="font-size:12px; color:var(--muted);">@username · ID —</div>
+              <div id="profileRankBadge" class="rank-badge">🏅 Новичок</div>
+            </div>
+          </div>
+          <button id="profileTopupBtn" class="mini-btn" type="button">+ Пополнить</button>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted);">
+            <span id="profileRankSpentLabel">0 ₽ потрачено</span>
+            <span id="profileNextRankText">До «Участник»: 500 ₽</span>
+          </div>
+          <div class="rank-bar"><div id="profileRankBarFill" class="rank-fill"></div></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-label">Баланс</div><div id="profileBalanceVal" class="stat-val">0 ₽</div></div>
+          <div class="stat-box"><div class="stat-label">TON</div><div id="profileTonBalanceVal" class="stat-val">-</div></div>
+          <div class="stat-box"><div class="stat-label">Потрачено</div><div id="profileSpentVal" class="stat-val">0 ₽</div></div>
+          <div class="stat-box"><div class="stat-label">Куплено Stars</div><div id="profileStarsVal" class="stat-val">0 ⭐</div></div>
+          <div class="stat-box"><div class="stat-label">Заказов</div><div id="profileOrdersVal" class="stat-val">0</div></div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="field-top">
+          <span class="field-label">🎨 Тема оформления</span>
+          <span class="field-label">Живое переключение</span>
+        </div>
+        <div id="profileThemeGrid" class="theme-grid"></div>
+      </div>
+
+      <div class="glass-card">
+        <div class="field-top">
+          <span class="field-label">Реферальная программа (5%)</span>
+          <button id="copyRefLinkBtn" class="mini-btn" type="button">Копировать</button>
+        </div>
+        <div id="refLinkText" style="padding:10px; border-radius:12px; background:var(--field); font-size:12px; word-break:break-all; color:var(--price);">https://t.me/wujje_store_bot</div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-label">Приглашено / Подтв.</div><div id="refCountsVal" class="stat-val">0 / 0</div></div>
+          <div class="stat-box"><div class="stat-label">К выводу</div><div id="refAvailableVal" class="stat-val">0 ₽</div></div>
+        </div>
+        <button id="claimRefBtn" class="secondary-btn" type="button">Забрать на баланс</button>
+        <div id="refStatusNote" class="status-note"></div>
+      </div>
+
+      <div class="glass-card">
+        <div class="field-top">
+          <span class="field-label">Достижения</span>
+          <span id="achCounterText" class="field-label">0 / 5</span>
+        </div>
+        <div id="achievementsGrid" class="ach-grid"></div>
+      </div>
+    </section>
+
+    <section id="screen-faq" class="screen">
+      <div class="faq-item">
+      <div class="faq-item">
+        <div class="faq-q">Как учитывается курс TON / GRAM?</div>
+        <div class="faq-a">Расчёт привязан к рублю с учётом текущей просадки TON (~84 ₽) и запасом маржи, чтобы магазин не уходил в минус при колебаниях курса.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Как пополнить баланс ₽?</div>
+        <div class="faq-a">Перейди в Профиль → Баланс → выбери сумму → оплати через СБП/QR. Деньги поступят мгновенно. Есть промокоды на доп. бонусы.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Почему я вижу "не доступно"?</div>
+        <div class="faq-a">Товар недоступен для твоего региона или достигнут лимит продаж. Подпишись на уведомления, чтобы узнать, когда вернётся.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Как работает реферальная программа?</div>
+        <div class="faq-a">Дай свой реф-ссылку друзьям. С каждой их покупки ты получишь комиссию. Доход можно вывести или потратить на подарки.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Какие способы оплаты доступны?</div>
+        <div class="faq-a">Баланс ₽ (пополнение через СБП/QR), TON кошелек (напрямую из Web3 кошелька) и Telegram Stars.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Это безопасно? Данные куда идут?</div>
+        <div class="faq-a">Мы используем защищённые платёжные каналы. Твой кошелек не раскрывается третьим лицам. Все сделки логируются и могут быть проверены.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Можно ли отменить или вернуть платёж?</div>
+        <div class="faq-a">Платежи необратимы — это особенность криптовалют. Перед отправкой проверь все данные. При ошибке свяжись с поддержкой.</div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="bottom-dock">
+    <button class="dock-btn active" type="button" data-tab="hub">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Магазин</span>
+    </button>
+    <button class="dock-btn" type="button" data-tab="orders">
+      <span id="dockOrdersBadge" class="dock-badge">0</span>
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>Заказы</span>
+    </button>
+    <button class="dock-btn" type="button" data-tab="profile">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Профиль</span>
+    </button>
+    <button class="dock-btn" type="button" data-tab="faq">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>FAQ</span>
+    </button>
+  </nav>
+
+  <div id="themeSheet" class="modal-backdrop sheet">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Выбери стиль Wujje Store</div>
+          <div style="font-size:12px; color:var(--muted); margin-top:2px;">Нажми на тему — витрина на фоне сразу перекрасится</div>
+        </div>
+      </div>
+      <div id="onboardThemeGrid" class="theme-grid"></div>
+      <button id="confirmThemeBtn" class="primary-btn" type="button" style="margin-top:14px;">Продолжить</button>
+    </div>
+  </div>
+
+  <div id="topupModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Пополнение баланса (₽)</div>
+        <button id="closeTopupBtn" class="modal-close" type="button">×</button>
+      </div>
+      <label class="field-label" for="topupAmountInput">Сумма пополнения (₽)</label>
+      <input id="topupAmountInput" class="input" type="number" min="10" step="10" value="500" style="margin-top:6px;" />
+      <div class="preset-row">
+        <button class="preset-chip" type="button" data-amount="100">100 ₽</button>
+        <button class="preset-chip" type="button" data-amount="500">500 ₽</button>
+        <button class="preset-chip" type="button" data-amount="1000">1 000 ₽</button>
+        <button class="preset-chip" type="button" data-amount="2500">2 500 ₽</button>
+      </div>
+      <div class="field-top" style="margin-top:12px;">
+        <span class="field-label">Бонус при пополнении</span>
+        <button id="togglePromoBtn" class="mini-btn" type="button">🎟 Есть промокод?</button>
+      </div>
+      <div id="promoBox" class="promo-box">
+        <div style="display:flex; gap:8px;">
+          <input id="promoCodeInput" class="input" type="text" placeholder="Введите промокод" autocomplete="off" />
+          <button id="applyPromoBtn" class="mini-btn" type="button" style="padding:0 12px;">ОК</button>
+        </div>
+        <div id="promoStatusText" class="promo-status"></div>
+      </div>
+      <button id="confirmTopupBtn" class="primary-btn" type="button" style="margin-top:12px;">Показать QR-код СБП</button>
+      <button id="refreshBalanceBtn" class="secondary-btn" type="button">Я оплатил — обновить баланс</button>
+      <div id="topupStatus" class="status-note"></div>
+      <div id="topupQrBox" class="qr-result-box">
+        <div id="topupQrMeta" style="font-size:12.5px; color:var(--price);"></div>
+        <img id="topupQrImg" class="qr-result-img" src="" alt="QR СБП" />
+        <a id="topupPayLink" href="#" target="_blank" rel="noopener noreferrer" class="primary-btn" style="display:block; text-decoration:none;">Открыть оплату</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="payModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">⚡ Быстрая оплата</div>
+        <button id="closePayModalBtn" class="modal-close" type="button">×</button>
+      </div>
+      <div id="payModalSummary" class="field-label" style="margin-bottom:12px; color:var(--price);"></div>
+
+      <button id="payWithBalanceBtn" class="pay-choice-btn" type="button">
+        <div class="pay-choice-left">
+          <div class="pay-choice-icon">₽</div>
+          <div>
+            <div style="font-size:14px; font-weight:800;">С баланса (₽)</div>
+            <div id="payModalBalanceSub" style="font-size:11.5px; color:var(--muted);">Доступно: 0 ₽</div>
+          </div>
+        </div>
+        <div id="payModalRubPrice" style="font-size:14px; font-weight:900;">0 ₽</div>
+      </button>
+
+      <button id="topupMissingBtn" class="secondary-btn" type="button" style="display:none; margin-bottom:9px; margin-top:0;">Пополнить нехватку</button>
+
+      <button id="payWithCryptoBtn" class="pay-choice-btn" type="button">
+        <div class="pay-choice-left">
+          <div class="pay-choice-icon">💎</div>
+          <div>
+            <div style="font-size:14px; font-weight:800;">Crypto (TON)</div>
+            <div id="payModalWalletSub" style="font-size:11.5px; color:var(--muted);">Оплата через TonConnect</div>
+          </div>
+        </div>
+        <div id="payModalTonPrice" style="font-size:14px; font-weight:900;">0 TON</div>
+      </button>
+
+      <div id="payModalStatus" class="status-note"></div>
+    </div>
+  </div>
+
+  <!-- Thank You Modal with Receipt -->
+  <div id="thankYouModal" class="modal-backdrop" style="backdrop-filter: blur(10px); background: rgba(0, 0, 0, 0.7);">
+    <div class="modal-box" style="background: rgba(24, 18, 46, 0.95); border: 1px solid rgba(168, 85, 247, 0.4); max-width: 340px;">
+      <div style="text-align: center; padding: 24px 20px;">
+        <!-- Success checkmark animation -->
+        <div style="font-size: 48px; margin-bottom: 16px; animation: checkmarkBounce 0.6s ease-out;">✅</div>
+        <div style="font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 20px;">Спасибо за заказ!</div>
+
+        <!-- Receipt card -->
+        <div style="background: rgba(12, 9, 24, 0.8); border: 1px solid rgba(192, 132, 252, 0.25); border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 20px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px;">Чек заказа</div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(192, 132, 252, 0.15);">
+            <div style="font-size: 11px; color: var(--muted);">Номер заказа</div>
+            <div class="receipt-order-id" style="font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer;">—</div>
+          </div>
+
+          <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(192, 132, 252, 0.15);">
+            <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">Товар</div>
+            <div class="receipt-item" style="font-size: 13px; font-weight: 600; color: var(--text);">—</div>
+          </div>
+
+          <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(192, 132, 252, 0.15);">
+            <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">Получатель</div>
+            <div class="receipt-recipient" style="font-size: 13px; font-weight: 600; color: var(--text); word-break: break-word;">—</div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(192, 132, 252, 0.15);">
+            <div style="font-size: 11px; color: var(--muted);">Оплачено</div>
+            <div class="receipt-amount" style="font-size: 14px; font-weight: 700; color: var(--accent);">—</div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 11px; color: var(--muted);">Способ оплаты</div>
+            <div class="receipt-method" style="font-size: 12px; font-weight: 600; color: var(--text);">—</div>
+          </div>
+
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(192, 132, 252, 0.15); text-align: center;">
+            <div style="font-size: 11px; color: var(--muted);">Время доставки</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--accent); margin-top: 4px;">1–3 минуты ⚡</div>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <button class="btn-my-orders primary-btn" type="button" style="width: 100%; margin-bottom: 10px; font-size: 14px;">Мои заказы</button>
+        <a class="btn-review secondary-btn" href="https://t.me" target="_blank" style="display: block; width: 100%; text-align: center; padding: 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-decoration: none; font-size: 14px; margin-bottom: 10px;">Оставить отзыв ⭐</a>
+        <button class="btn-close-thank-you secondary-btn" type="button" style="width: 100%; font-size: 14px;">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes checkmarkBounce {
+      0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+      70% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+  <script src="app.js" defer></script>
+  <script>
+  // Live gifts catalog integration - runs after main app initialization
+  function resolveGiftArtwork(item, fallbackSvg) {
+    const raw = String(
+      item?.image_url || item?.image || item?.photo || item?.img || ""
+    ).trim();
+    if (!raw) return fallbackSvg;
+    if (raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("data:")) {
+      return raw;
+    }
+    if (raw.startsWith("/")) {
+      return `${CONFIG.API_BASE}${raw}`;
+    }
+    return raw;
+  }
+
+  function safeImgTag(src, alt, fallbackSvg, className = "", style = "") {
+    const safeAlt = String(alt || "NFT Gift").replace(/"/g, "&quot;");
+    const safeFb = String(fallbackSvg || "").replace(/"/g, "&quot;");
+    const cls = className ? ` class="${className}"` : "";
+    const st = style ? ` style="${style}"` : "";
+    return `<img src="${src}" alt="${safeAlt}"${cls}${st} loading="lazy" onerror="if(this.dataset.fbApplied!=='1'){this.dataset.fbApplied='1';this.src=this.dataset.fallback;}else{this.style.display='none';}" data-fallback="${safeFb}">`;
+  }
+
+  function mergeLiveGiftsIntoCatalog(liveItems) {
+    if (!Array.isArray(liveItems) || !liveItems.length) return;
+
+    const byCollection = new Map();
+    for (const g of liveItems) {
+      if (!g || g.in_stock === false) continue;
+      const colName = String(g.collection || g.title || "").trim();
+      if (!colName) continue;
+      if (!byCollection.has(colName)) byCollection.set(colName, []);
+      byCollection.get(colName).push(g);
+    }
+
+    byCollection.forEach((groupItems, colName) => {
+      const first = groupItems[0];
+      const rubPrice = Math.max(1, Number(first.price_rub || 0) || tonFloorToRub(first.price_ton || 5));
+      const tonPrice = Number(first.price_ton || rubToTonSafe(rubPrice));
+      const fallbackArt = svgArt(colName, `Floor ${rubPrice} ₽`, "#17112e", "#a855f7", "🎁");
+      const resolvedArt = resolveGiftArtwork(first, fallbackArt);
+
+      const models = groupItems.map((g, i) => {
+        const mRub = Math.max(1, Number(g.price_rub || rubPrice));
+        const mTon = Number(g.price_ton || rubToTonSafe(mRub));
+        const mName = String(g.model || `${colName} #${i + 1}`).trim();
+        const mBg = String(g.backdrop || "Midnight Violet").trim();
+        const mFb = svgArt(mName, `${mRub} ₽`, "#181033", "#c084fc", "⚡");
+        return {
+          giftId: String(g.id || ""),
+          name: mName,
+          rarity: g.stars ? `${g.stars} ⭐` : "1.2%",
+          bg: mBg,
+          pattern: g.key || "NFT Gift",
+          floorRub: mRub,
+          floorTon: mTon,
+          img: resolveGiftArtwork(g, mFb)
+        };
+      });
+
+      const existingIdx = NFT_COLLECTIONS.findIndex(
+        (c) => c.title.toLowerCase() === colName.toLowerCase()
+      );
+
+      const mergedCol = {
+        id: existingIdx >= 0 ? NFT_COLLECTIONS[existingIdx].id : `live_${colName.toLowerCase().replace(/\W+/g, "_")}`,
+        giftId: String(first.id || ""),
+        title: colName,
+        floorRub: rubPrice,
+        floorTon: tonPrice,
+        img: resolvedArt,
+        models: existingIdx >= 0 && !first.model
+          ? NFT_COLLECTIONS[existingIdx].models.map((m) => ({
+              ...m,
+              giftId: m.giftId || String(first.id || ""),
+              img: resolveGiftArtwork(first, m.img)
+            }))
+          : models
+      };
+
+      if (existingIdx >= 0) {
+        NFT_COLLECTIONS[existingIdx] = {
+          ...NFT_COLLECTIONS[existingIdx],
+          ...mergedCol
+        };
+      } else {
+        NFT_COLLECTIONS.unshift(mergedCol);
+      }
+    });
+
+    if (currentView === "nft-list") {
+      renderNftList(document.getElementById("nftSearchInput")?.value || "");
+    } else if (currentView === "nft-models" && activeNftCollection) {
+      const updatedCol = NFT_COLLECTIONS.find((c) => c.title === activeNftCollection.title);
+      if (updatedCol) openNftModels(updatedCol);
+    }
+  }
+
+  async function syncLiveGiftsCatalog() {
+    const data = await API.getGifts();
+    if (data?.ok && Array.isArray(data.items)) {
+      mergeLiveGiftsIntoCatalog(data.items);
+    }
+  }
+
+  // Переопределяем рендер списка NFT-коллекций с безопасной загрузкой фото и передачей giftId
+  window.renderNftList = function (filterText = "") {
+    const q = String(filterText || "").trim().toLowerCase();
+    const filtered = NFT_COLLECTIONS.filter((c) => !q || c.title.toLowerCase().includes(q));
+    const grid = document.getElementById("nftCollectionsGrid");
+    if (!grid) return;
+
+    grid.innerHTML = filtered.map((col) => {
+      const realIdx = NFT_COLLECTIONS.indexOf(col);
+      const fb = svgArt(col.title, `Floor ${col.floorRub} ₽`, "#17112e", "#a855f7", "🎁");
+      const src = resolveGiftArtwork(col, fb);
+      return `
+        <div class="nft-card">
+          <div class="nft-img-wrap" data-col-idx="${realIdx}">
+            ${safeImgTag(src, col.title, fb)}
+            <button type="button" class="bolt-btn nft-quick-bolt" data-col-idx="${realIdx}" title="Быстрая покупка">⚡</button>
+          </div>
+          <div class="nft-body" data-col-idx="${realIdx}">
+            <div class="nft-title">${col.title}</div>
+            <div class="nft-meta">${col.models.length} модели · В наличии</div>
+            <div class="nft-floor-row">
+              <div>
+                <div class="nft-price">Флор ${fmt(col.floorRub)} ₽</div>
+                <div class="nft-ton">${col.floorTon} TON</div>
+              </div>
+              <span class="tag-pill">Модели →</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    grid.querySelectorAll(".nft-img-wrap, .nft-body").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        if (e.target.closest(".bolt-btn")) return;
+        haptic("light");
+        openNftModels(NFT_COLLECTIONS[Number(el.dataset.colIdx)]);
+      });
+    });
+
+    grid.querySelectorAll(".nft-quick-bolt").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        haptic("medium");
+        const col = NFT_COLLECTIONS[Number(btn.dataset.colIdx)];
+        const defaultModelGiftId = col.models?.[0]?.giftId || col.giftId || "";
+        openCheckout({
+          mode: "product",
+          giftId: defaultModelGiftId,
+          label: `${col.title} (Floor)`,
+          rub: col.floorRub,
+          ton: col.floorTon,
+          target: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@username"
+        });
+      });
+    });
+  };
+
+  // Переопределяем экран моделей NFT с превью и поддержкой giftId
+  window.openNftModels = function (col) {
+    activeNftCollection = col;
+    document.getElementById("nftColTitle").textContent = col.title;
+    document.getElementById("nftColFloorInfo").textContent =
+      `Базовый флор: ${fmt(col.floorRub)} ₽ (${col.floorTon} TON) · Редкие модели дороже`;
+
+    const box = document.getElementById("nftModelsContainer");
+    box.innerHTML = col.models.map((m, mIdx) => {
+      const fb = svgArt(m.name, `${m.floorRub} ₽`, "#181033", "#c084fc", "⚡");
+      const src = resolveGiftArtwork(m, fb);
+      return `
+        <div class="model-card">
+          <div class="model-specs-bar">
+            <span class="spec-chip">Модель: <b>${m.name}</b></span>
+            <span class="spec-chip">Шанс: <b>${m.rarity}</b></span>
+            <span class="spec-chip">Фон: <b>${m.bg}</b></span>
+            <span class="spec-chip">Узор: <b>${m.pattern}</b></span>
+          </div>
+          <div class="model-photo-box">
+            ${safeImgTag(src, `${col.title} — ${m.name}`, fb)}
+            <button type="button" class="bolt-btn model-bolt" data-m-idx="${mIdx}" title="Быстрая покупка">⚡</button>
+          </div>
+          <div class="model-footer">
+            <div>
+              <div style="font-size:14.5px; font-weight:900;">Флор: ${fmt(m.floorRub)} ₽</div>
+              <div style="font-size:11.5px; color:var(--muted);">${m.floorTon} TON · В наличии</div>
+            </div>
+            <button type="button" class="hero-btn model-buy-btn" data-m-idx="${mIdx}" style="padding:9px 13px; font-size:12px;">⚡ Купить модель</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const triggerModelBuy = (mIdx) => {
+      haptic("medium");
+      const m = col.models[mIdx];
+      openCheckout({
+        mode: "product",
+        giftId: m.giftId || col.giftId || "",
+        label: `${col.title} · ${m.name}`,
+        rub: m.floorRub,
+        ton: m.floorTon,
+        target: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@username"
+      });
+    };
+
+    box.querySelectorAll(".model-bolt, .model-buy-btn").forEach((btn) => {
+      btn.addEventListener("click", () => triggerModelBuy(Number(btn.dataset.mIdx)));
+    });
+
+    switchScreen("nft-models", col.title, "Характеристики и модели", "./icons/nft.png");
+  };
+
+  // Пробрасываем giftId в openCheckout и при оплате с баланса вызываем /api/pay_balance
+  const origOpenCheckout = openCheckout;
+  openCheckout = function (opts) {
+    origOpenCheckout(opts);
+    if (currentCheckoutItem) {
+      currentCheckoutItem.giftId = String(opts?.giftId || "");
+    }
+  };
+
+  const payBalBtn = document.getElementById("payWithBalanceBtn");
+  if (payBalBtn) {
+    const clonedPayBtn = payBalBtn.cloneNode(true);
+    payBalBtn.parentNode.replaceChild(clonedPayBtn, payBalBtn);
+
+    clonedPayBtn.addEventListener("click", async () => {
+      const st = document.getElementById("payModalStatus");
+      const recipient = currentCheckoutTarget || "";
+      if (recipient.length < 2) {
+        st.textContent = "Укажи получателя.";
+        return;
+      }
+      const rub = Number(currentCheckoutItem?.rub || 0);
+      if (rubBalance < rub) {
+        st.textContent = "Недостаточно средств на балансе.";
+        return;
+      }
+
+      const giftId = String(currentCheckoutItem?.giftId || "").trim();
+      if (giftId && tg?.initData) {
+        st.textContent = "Проверяем наличие и списываем баланс...";
+        const d = await API.payGiftWithBalance(tg.initData, recipient, giftId);
+
+        if (d?.ok) {
+          if (typeof d.balance === "number") setRubBalance(d.balance, true);
+          else setRubBalance(rubBalance - rub, true);
+          saveOrder({
+            id: d.order_id || ("ord_" + Date.now()),
+            itemLabel: currentCheckoutItem.label,
+            target: recipient,
+            rubAmount: rub,
+            priceLabel: `${fmt(rub)} ₽`,
+            method: "Баланс ₽",
+            statusText: "Оплачен",
+            dateText: new Date().toLocaleString("ru-RU")
+          });
+          payModal.classList.remove("open");
+          st.textContent = "";
+          syncLiveGiftsCatalog();
+          return;
+        }
+        if (d?.error === "gift_sold_out") {
+          st.textContent = "Этот подарок уже забрали — обновляем каталог.";
+          syncLiveGiftsCatalog();
+          return;
+        }
+        if (d?.error === "insufficient_funds") {
+          st.textContent = "Недостаточно средств на балансе.";
+          return;
+        }
+        st.textContent = d?.error || (isOnline() ? "Ошибка оплаты подарка." : "Нет интернета.");
+        return;
+      }
+
+      if (checkoutMode === "stars" && resolvedRecipient) {
+        st.textContent = "Проводим оплату...";
+        const d = await API.payStarsWithBalance(tg?.initData || "", selectedPackage.stars, recipient);
+
+        if (d?.ok) {
+          setRubBalance(d.balance, true);
+          saveOrder({
+            id: d.order_id,
+            stars: selectedPackage.stars,
+            itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`,
+            target: recipient,
+            rubAmount: rub,
+            priceLabel: `${fmt(rub)} ₽`,
+            method: "Баланс ₽",
+            statusText: "Оплачен",
+            dateText: new Date().toLocaleString("ru-RU")
+          });
+          payModal.classList.remove("open");
+          document.getElementById("statusNote").textContent = `✅ Заказ #${d.order_id} оплачен!`;
+        } else {
+          st.textContent = isOnline() ? "Ошибка оплаты." : "Нет интернета.";
+        }
+        return;
+      }
+
+      const id = "ord_" + Date.now();
+      setRubBalance(rubBalance - rub, true);
+      saveOrder({
+        id,
+        itemLabel: currentCheckoutItem.label,
+        target: recipient,
+        rubAmount: rub,
+        priceLabel: `${fmt(rub)} ₽`,
+        method: "Баланс ₽",
+        statusText: "Оплачен",
+        dateText: new Date().toLocaleString("ru-RU")
+      });
+      payModal.classList.remove("open");
+      st.textContent = "";
+    });
+  }
+
+  syncLiveGiftsCatalog();
+  window.debugLog("✓ syncLiveGiftsCatalog() called");
+  window.APP_INITIALIZED = true;
+  window.debugLog("✓ APP_INITIALIZED = true");
+
+  document.getElementById("app")?.classList.add("app-ready");
+
+  if (!localStorage.getItem(CONFIG.THEME_KEY)) {
+    setTimeout(() => {
+      const themeSheet = document.getElementById("themeSheet");
+      if (themeSheet) themeSheet.classList.add("open");
+    }, 2380);
+  }
+
+  setInterval(() => {
+    if (document.visibilityState === "visible") syncLiveGiftsCatalog();
+  }, 60000);
+
+  // ============================================
+  // PERFORMANCE OPTIMIZATIONS INTEGRATION
+  // ============================================
+
+  // Загружаем скрипт оптимизаций
+  const perfScript = document.createElement('script');
+  perfScript.src = 'performance-optimizations.js';
+  perfScript.onload = () => {
+
+    // Инициализируем оптимизации
+    if (window.perfOptimizations) {
+      window.perfOptimizations.init();
+
+      // Определяем тип устройства
+      const isLowEnd = window.perfOptimizations.isLowEndDevice();
+
+      if (isLowEnd) {
+
+        // Заменяем svgArt на упрощенную версию
+        const originalSvgArt = window.svgArt;
+        window.svgArt = (title, floorLabel, bgHex, accentHex, symbol) => {
+          return window.perfOptimizations.simplifiedSvgArt(
+            title, floorLabel, bgHex, accentHex, symbol
+          );
+        };
+      }
+    }
+  };
+  document.head.appendChild(perfScript);
+</script>
+</body>
+</html>

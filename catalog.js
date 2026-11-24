@@ -167,3 +167,12 @@ const THEMES = [
   { id: "emerald", name: "Carbon Emerald", tag: "Изумруд · Крипто", swatch: "linear-gradient(135deg,#10b981,#064e3b)", icon: "💎", logo: "./icons/theme-emerald.jpg" },
   { id: "ice", name: "Ice Glass", tag: "Светлая тема", swatch: "linear-gradient(135deg,#ffffff,#93c5fd)", icon: "❄️", logo: "./icons/theme-ice.jpg" }
 ];
+
+// Export to window for app.js to access
+window.PACKAGES_BASE = PACKAGES_BASE;
+window.RAW_122_GIFTS = RAW_122_GIFTS;
+window.PALETTES = PALETTES;
+window.THEMES = THEMES;
+window.CATEGORIES_BASE = CATEGORIES_BASE;
+window.NFT_COLLECTIONS = NFT_COLLECTIONS;
+window.CATEGORIES = CATEGORIES;

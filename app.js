@@ -1,10 +1,11 @@
+document.addEventListener("DOMContentLoaded", function() {
     window.debugLog = function(msg) {
       console.log("[Wujje Debug]", msg);
     };
 
     // Start logging immediately
     setTimeout(() => window.debugLog("🚀 App starting..."), 100);
-    window.debugLog("✓ config.js loaded");
+    window.debugLog("✓ catalog.js and DOM ready");
     // Core utilities - MUST be defined before any other code
     const tg = window.Telegram?.WebApp;
     if (tg) {
@@ -72,116 +73,13 @@
       return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     }
 
-    const THEMES = [
-      { id: "violet", name: "Cyber Violet", tag: "Неон · Игровой", swatch: "linear-gradient(135deg,#a855f7,#4c1d95)", icon: "⚡", logo: "./icons/theme-violet.jpg" },
-      { id: "sapphire", name: "Midnight Sapphire", tag: "Глубокий синий", swatch: "linear-gradient(135deg,#38bdf8,#1e3a8a)", icon: "🌙", logo: "./icons/theme-sapphire.jpg" },
-      { id: "emerald", name: "Carbon Emerald", tag: "Изумруд · Крипто", swatch: "linear-gradient(135deg,#10b981,#064e3b)", icon: "💎", logo: "./icons/theme-emerald.jpg" },
-      { id: "ice", name: "Ice Glass", tag: "Светлая тема", swatch: "linear-gradient(135deg,#ffffff,#93c5fd)", icon: "❄️", logo: "./icons/theme-ice.jpg" }
-    ];
+    // THEMES and PACKAGES are now imported from catalog.js
+    // They are set to window scope and available globally
 
-    const PACKAGES = [
-      { stars: 50, rub: 76 },
-      { stars: 75, rub: 114 },
-      { stars: 100, rub: 152 },
-      { stars: 150, rub: 227 },
-      { stars: 250, rub: 379 },
-      { stars: 350, rub: 530 },
-      { stars: 500, rub: 758 },
-      { stars: 750, rub: 1137 },
-      { stars: 1000, rub: 1515 },
-      { stars: 1500, rub: 2273 },
-      { stars: 2500, rub: 3787 },
-      { stars: 5000, rub: 7575 },
-      { stars: 10000, rub: 15150 }
-    ].map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
+    // Build PACKAGES with TON conversion from catalog.js PACKAGES_BASE
+    const PACKAGES = (window.PACKAGES_BASE || []).map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
 
-    const RAW_122_GIFTS = [
-      ["Algorithm Cups", 3450], ["Artisan Bricks", 85], ["Astral Shards", 147], ["B-Day Candles", 6],
-      ["Berry Boxes", 10], ["Big Years", 5], ["Bling Binkies", 29], ["Bonded Rings", 45],
-      ["Bow Ties", 7], ["Bunny Muffins", 9], ["Candy Canes", 5], ["Chill Flames", 5],
-      ["Clover Pins", 6], ["Cookie Hearts", 6], ["Crystal Balls", 14], ["Cupid Charms", 25],
-      ["Desk Calendars", 7], ["Diamond Rings", 36], ["Durov's Caps", 470], ["Durov's Glasses", 229],
-      ["Easter Eggs", 5], ["Electric Skulls", 35], ["Eternal Candles", 7], ["Eternal Roses", 35],
-      ["Evil Eyes", 9], ["Faith Amulets", 7], ["Fine Pens", 9], ["Flying Brooms", 14],
-      ["Fresh Socks", 6], ["Gem Signets", 72], ["Genie Lamps", 40], ["Ginger Cookies", 6],
-      ["Hanging Stars", 11], ["Happy Brownies", 5], ["Heart Lockets", 1444], ["Heroic Helmets", 199],
-      ["Hex Pots", 7], ["Holiday Drinks", 5], ["Homemade Cakes", 6], ["Hypno Lollipops", 5],
-      ["Ice Creams", 5], ["Input Keys", 8], ["Instant Ramens", 5], ["Intelligence Cups", 3099],
-      ["Ion Gems", 85], ["Ionic Dryers", 19], ["Jacks-in-the-Box", 6], ["Jelly Bunnies", 9],
-      ["Jester Hats", 5], ["Jingle Bells", 11], ["Jolly Chimps", 8], ["Joyful Bundles", 11],
-      ["Khabib's Papakhas", 27], ["Kissed Frogs", 59], ["Liberty Figures", 6], ["Light Swords", 7],
-      ["Lol Pops", 5], ["Loot Bags", 141], ["Love Candles", 12], ["Love Potions", 16],
-      ["Low Riders", 62], ["Lunar Snakes", 5], ["Lush Bouquets", 7], ["Mad Pumpkins", 21],
-      ["Magic Potions", 75], ["Mighty Arms", 150], ["Mini Oscars", 78], ["Mirage Lamps", 5],
-      ["Money Pots", 6], ["Mood Packs", 5], ["Moon Pendants", 7], ["Mousse Cakes", 6],
-      ["Nail Bracelets", 149], ["Neko Helmets", 45], ["Party Sparklers", 6], ["Perfume Bottles", 86],
-      ["Pet Snakes", 5], ["Plush Pepes", 7000], ["Pool Floats", 5], ["Precious Peaches", 290],
-      ["Pretty Posies", 6], ["Rare Birds", 30], ["Record Players", 13], ["Resistance Dogs", 800],
-      ["Restless Jars", 6], ["Sakura Flowers", 12], ["Santa Hats", 7], ["Scared Cats", 299],
-      ["Sharp Tongues", 55], ["Signet Rings", 40], ["Skull Flowers", 14], ["Sky Stilettos", 20],
-      ["Sleigh Bells", 12], ["Snake Boxes", 5], ["Snoop Cigars", 19], ["Snoop Doggs", 6],
-      ["Snow Globes", 7], ["Snow Mittens", 10], ["Spiced Wines", 5], ["Spring Baskets", 6],
-      ["Spy Agarics", 7], ["Star Notepads", 5], ["Stellar Rockets", 6], ["Surge Boards", 8],
-      ["Swag Bags", 6], ["Swiss Watches", 65], ["Tama Gadgets", 5], ["Timeless Books", 5],
-      ["Top Hats", 11], ["Toy Bears", 36], ["Trapped Hearts", 18], ["UFC Strikes", 18],
-      ["Valentine Boxes", 13], ["Vice Creams", 5], ["Victory Medals", 6], ["Vintage Cigars", 46],
-      ["Voodoo Dolls", 43], ["Westside Signs", 128], ["Whip Cupcakes", 5], ["Winter Wreaths", 6],
-      ["Witch Hats", 10], ["Xmas Stockings", 5]
-    ];
-
-    const PALETTES = [
-      ["#17112e", "#a855f7", "🎁"],
-      ["#241029", "#ec4899", "✨"],
-      ["#0c2119", "#34d399", "💎"],
-      ["#21180b", "#fbbf24", "👑"],
-      ["#0b1d2b", "#38bdf8", "🔮"]
-    ];
-
-    const NFT_COLLECTIONS = RAW_122_GIFTS.map(([title, baseTon], idx) => {
-      const [bgHex, accentHex, sym] = PALETTES[idx % PALETTES.length];
-      const floorRub = tonFloorToRub(baseTon);
-      const floorTon = rubToTonSafe(floorRub);
-      const rareRub = Math.round(floorRub * 1.45);
-      const mythicRub = Math.round(floorRub * 2.1);
-
-      return {
-        id: `nft_${idx + 1}`,
-        title,
-        floorRub,
-        floorTon,
-        img: svgArt(title, `Floor ${floorRub} ₽`, bgHex, accentHex, sym),
-        models: [
-          {
-            name: `${title.split(" ")[0]} Classic`,
-            rarity: "1.8%",
-            bg: "Midnight Violet",
-            pattern: "Neon Grid",
-            floorRub,
-            floorTon,
-            img: svgArt(`${title.split(" ")[0]} Classic`, `${floorRub} ₽`, bgHex, accentHex, sym)
-          },
-          {
-            name: `${title.split(" ")[0]} Rare`,
-            rarity: "0.7%",
-            bg: "Deep Indigo",
-            pattern: "Starlight",
-            floorRub: rareRub,
-            floorTon: rubToTonSafe(rareRub),
-            img: svgArt(`${title.split(" ")[0]} Rare`, `${rareRub} ₽`, "#181033", "#c084fc", "⚡")
-          },
-          {
-            name: `${title.split(" ")[0]} Mythic`,
-            rarity: "0.2%",
-            bg: "Obsidian Gold",
-            pattern: "Crown Aura",
-            floorRub: mythicRub,
-            floorTon: rubToTonSafe(mythicRub),
-            img: svgArt(`${title.split(" ")[0]} Mythic`, `${mythicRub} ₽`, "#241909", "#fbbf24", "👑")
-          }
-        ]
-      };
-    });
-
+    // Build NFT collections and CATEGORIES from catalog data
     const CATEGORIES = [
       {
         id: "telegram", group: "telegram", img: "./icons/telegram.png", emoji: "✈️",
@@ -2011,4 +1909,6 @@
     syncReferralInfo();
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
+  });
+});
 
