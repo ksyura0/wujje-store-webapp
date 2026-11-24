@@ -1908,4 +1908,3 @@
     syncReferralInfo();
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
-  });
