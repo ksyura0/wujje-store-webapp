@@ -307,7 +307,7 @@ class FunPayAutoBuy:
             amount_rub: Amount in rubles
 
         Returns:
-            Order ID on FunPay (e.g., #XXXXXXX) or None if failed
+            Order ID on FunPay (e.g., #ABCD1234) or None if failed
         """
         try:
             if not self.session:
@@ -327,13 +327,13 @@ class FunPayAutoBuy:
 
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            # Find purchase form
-            form = soup.find('form', {'method': 'POST'})
+            # Find purchase form by action endpoint /orders/new (real FunPay form)
+            form = soup.find('form', {'action': re.compile(r'/orders/new')})
             if not form:
-                logger.error("❌ Could not find purchase form on offer page")
+                logger.error("❌ Could not find purchase form with action='/orders/new'")
                 return None
 
-            # Extract form fields
+            # Extract all hidden form fields (csrf_token, type, seller, game, chip, server, side, price_guard, etc.)
             form_data = {}
             for input_field in form.find_all(['input', 'textarea']):
                 name = input_field.get('name')
@@ -341,17 +341,17 @@ class FunPayAutoBuy:
                 if name:
                     form_data[name] = value
 
-            # Log hidden fields (csrf_token, offer_id, node_id, location, secrets)
-            hidden_fields = [k for k in form_data.keys() if k not in ['steam_login', 'amount']]
+            # Log hidden fields
+            hidden_fields = [k for k in form_data.keys() if k not in ['player', 'amount', 'preview', 'sum', 'method']]
             if hidden_fields:
                 logger.debug(f"Found hidden form fields: {hidden_fields}")
 
-            # Set/override critical fields
-            form_data['steam_login'] = steam_login
-            form_data['amount'] = str(int(amount_rub))
-            form_data['payment_method'] = 'balance'  # Use FunPay internal balance
-            if self.csrf_token:
-                form_data['csrf_token'] = self.csrf_token
+            # Set payment fields according to real FunPay form structure
+            form_data['preview'] = ''  # Empty string to skip preview and create order directly
+            form_data['method'] = 'balance'  # Payment method: use FunPay internal balance
+            form_data['player'] = steam_login  # Steam login field name on FunPay is 'player'
+            form_data['amount'] = str(int(amount_rub))  # Amount in rubles
+            form_data['sum'] = ''  # Leave empty for auto-calculation on FunPay server
 
             # Determine form action URL
             form_action = form.get('action', '')
@@ -361,36 +361,50 @@ class FunPayAutoBuy:
                 form_url = urljoin(self.FUNPAY_BASE, form_action)
 
             logger.info(f"📝 Submitting form to: {form_url}")
-            logger.info(f"   Form data: steam_login={steam_login}, amount={amount_rub}")
+            logger.info(f"   Form data: player={steam_login}, amount={amount_rub}, method=balance")
 
-            # Submit purchase
+            # Submit purchase with Referer header and allow redirects
             purchase_response = self.session.post(
                 form_url,
                 data=form_data,
                 timeout=20,
-                allow_redirects=True
+                allow_redirects=True,
+                headers={'Referer': offer['offer_url']}
             )
 
-            # Look for order ID in response
+            # Look for order ID in response (bukvennno-tsifrovoi ID like ABCD1234, ne tolko cifry)
             order_id = None
 
-            # Try to find order ID in URL (redirect)
-            if 'order' in purchase_response.url:
-                match = re.search(r'/order/(\d+)', purchase_response.url)
+            # Try to find order ID in final redirect URL
+            if 'orders' in purchase_response.url:
+                match = re.search(r'/orders/([A-Z0-9]+)/', purchase_response.url)
                 if match:
                     order_id = f"#{match.group(1)}"
 
             # Try to find order ID in response content
             if not order_id:
                 content = purchase_response.text
-                # Look for order ID pattern like #XXXXXXX
-                match = re.search(r'#(\d+)', content)
+                # Look for order ID pattern like #ABCD1234 (alphanumeric)
+                match = re.search(r'#([A-Z0-9]+)', content)
                 if match:
                     order_id = f"#{match.group(1)}"
 
             if not order_id:
                 logger.error(f"❌ Failed to extract order ID from response")
+                logger.debug(f"Response status: {purchase_response.status_code}")
                 logger.debug(f"Response URL: {purchase_response.url}")
+
+                # Try to extract and log error message from FunPay response
+                try:
+                    error_soup = BeautifulSoup(purchase_response.content, 'html.parser')
+                    # Look for error message in .form-group.has-error or .alert-danger
+                    error_elem = error_soup.find(class_=re.compile(r'has-error|alert-danger'))
+                    if error_elem:
+                        error_text = error_elem.get_text(strip=True)
+                        logger.error(f"FunPay error: {error_text}")
+                except:
+                    pass
+
                 return None
 
             logger.info(f"✅ Order created: {order_id}")
@@ -409,7 +423,7 @@ class FunPayAutoBuy:
         Monitor order chat and auto-respond to seller bot messages
 
         Args:
-            funpay_order_id: FunPay order ID (e.g., "123456")
+            funpay_order_id: FunPay order ID (e.g., "ABCD1234" or "123456", alphanumeric support)
             steam_login: Steam login to send if requested
             timeout_sec: Maximum monitoring duration (seconds)
             max_responses: Maximum auto-responses per order (prevent loops)
@@ -421,7 +435,7 @@ class FunPayAutoBuy:
             if not self.session:
                 self._init_session()
 
-            # Parse order ID (remove # if present)
+            # Parse order ID (remove # if present, support both numeric and alphanumeric like ABCD1234)
             order_id = funpay_order_id.lstrip('#')
             order_url = f"{self.FUNPAY_BASE}/orders/{order_id}/"
 
