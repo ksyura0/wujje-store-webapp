@@ -491,7 +491,7 @@
       100% { transform: scale(1); opacity: 1; }
     }
   </style>
-  <script src="app.js?v=20261124_23" defer></script>
+  <script src="app.js?v=20261125_1" defer></script>
   <script>
   // Live gifts catalog integration - runs after main app initialization
   function resolveGiftArtwork(item, fallbackSvg) {
@@ -725,102 +725,6 @@
     };
   }
   setupOpenCheckoutWrapper();
-
-  const payBalBtn = document.getElementById("payWithBalanceBtn");
-  if (payBalBtn) {
-    const clonedPayBtn = payBalBtn.cloneNode(true);
-    payBalBtn.parentNode.replaceChild(clonedPayBtn, payBalBtn);
-
-    clonedPayBtn.addEventListener("click", async () => {
-      const st = document.getElementById("payModalStatus");
-      const recipient = currentCheckoutTarget || "";
-      if (recipient.length < 2) {
-        st.textContent = "Укажи получателя.";
-        return;
-      }
-      const rub = Number(currentCheckoutItem?.rub || 0);
-      if (rubBalance < rub) {
-        st.textContent = "Недостаточно средств на балансе.";
-        return;
-      }
-
-      const giftId = String(currentCheckoutItem?.giftId || "").trim();
-      if (giftId && tg?.initData) {
-        st.textContent = "Проверяем наличие и списываем баланс...";
-        const d = await API.payGiftWithBalance(tg.initData, recipient, giftId);
-
-        if (d?.ok) {
-          if (typeof d.balance === "number") setRubBalance(d.balance, true);
-          else setRubBalance(rubBalance - rub, true);
-          saveOrder({
-            id: d.order_id || ("ord_" + Date.now()),
-            itemLabel: currentCheckoutItem.label,
-            target: recipient,
-            rubAmount: rub,
-            priceLabel: `${fmt(rub)} ₽`,
-            method: "Баланс ₽",
-            statusText: "Оплачен",
-            dateText: new Date().toLocaleString("ru-RU")
-          });
-          payModal.classList.remove("open");
-          st.textContent = "";
-          syncLiveGiftsCatalog();
-          return;
-        }
-        if (d?.error === "gift_sold_out") {
-          st.textContent = "Этот подарок уже забрали — обновляем каталог.";
-          syncLiveGiftsCatalog();
-          return;
-        }
-        if (d?.error === "insufficient_funds") {
-          st.textContent = "Недостаточно средств на балансе.";
-          return;
-        }
-        st.textContent = d?.error || (isOnline() ? "Ошибка оплаты подарка." : "Нет интернета.");
-        return;
-      }
-
-      if (checkoutMode === "stars" && resolvedRecipient) {
-        st.textContent = "Проводим оплату...";
-        const d = await API.payStarsWithBalance(tg?.initData || "", selectedPackage.stars, recipient);
-
-        if (d?.ok) {
-          setRubBalance(d.balance, true);
-          saveOrder({
-            id: d.order_id,
-            stars: selectedPackage.stars,
-            itemLabel: `⭐ ${fmt(selectedPackage.stars)} Stars`,
-            target: recipient,
-            rubAmount: rub,
-            priceLabel: `${fmt(rub)} ₽`,
-            method: "Баланс ₽",
-            statusText: "Оплачен",
-            dateText: new Date().toLocaleString("ru-RU")
-          });
-          payModal.classList.remove("open");
-          document.getElementById("statusNote").textContent = `✅ Заказ #${d.order_id} оплачен!`;
-        } else {
-          st.textContent = isOnline() ? "Ошибка оплаты." : "Нет интернета.";
-        }
-        return;
-      }
-
-      const id = "ord_" + Date.now();
-      setRubBalance(rubBalance - rub, true);
-      saveOrder({
-        id,
-        itemLabel: currentCheckoutItem.label,
-        target: recipient,
-        rubAmount: rub,
-        priceLabel: `${fmt(rub)} ₽`,
-        method: "Баланс ₽",
-        statusText: "Оплачен",
-        dateText: new Date().toLocaleString("ru-RU")
-      });
-      payModal.classList.remove("open");
-      st.textContent = "";
-    });
-  }
 
   syncLiveGiftsCatalog();
   window.debugLog("✓ syncLiveGiftsCatalog() called");

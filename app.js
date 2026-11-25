@@ -1778,6 +1778,11 @@
     // ===== END BLOCK 5 =====
 
     document.getElementById("payWithBalanceBtn").addEventListener("click", async () => {
+      if (window.isPayingBalance) return;
+      window.isPayingBalance = true;
+      const btn = document.getElementById("payWithBalanceBtn");
+      const wasDisabled = btn.disabled;
+      btn.disabled = true;
       const st = document.getElementById("payModalStatus");
       const recipient = currentCheckoutTarget || "";
       try {
@@ -1876,6 +1881,9 @@
       } catch (e) {
         st.textContent = `❌ ${e?.message || "Ошибка"}`;
         logPaymentError(`bal_${Date.now()}`, e);
+      } finally {
+        window.isPayingBalance = false;
+        btn.disabled = wasDisabled;
       }
     });
 
