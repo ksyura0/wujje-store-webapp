@@ -1896,7 +1896,19 @@
       const st = document.getElementById("payModalStatus");
       const recipient = currentCheckoutTarget || "";
       try {
+        // BUG FIX: Validate recipient format for Stars
         if (!recipient || recipient.length < 2) throw new Error("Укажи корректного получателя");
+
+        // BUG FIX: For Stars - require that recipient was successfully resolved
+        if (checkoutMode === "stars") {
+          if (!resolvedRecipient) {
+            throw new Error("Юзернейм не найден. Пересчитай.");
+          }
+          if (!recipient.startsWith("@")) {
+            throw new Error("Укажи @username получателя");
+          }
+        }
+
         const rub = currentCheckoutItem?.rub || 0;
         if (rub <= 0) throw new Error("Invalid amount");
         if (rubBalance < rub) throw new Error(`Недостаточно средств (нужно ${fmt(rub)} ₽, имеется ${fmt(rubBalance)} ₽)`);
@@ -1957,8 +1969,35 @@
         }
         // Telegram Stars
         else if (checkoutMode === "stars" && resolvedRecipient) {
+          // BUG FIX: Validate Stars amount before processing
+          if (!VALIDATORS.isValidStarsAmount(selectedPackage.stars)) {
+            throw new Error("Неверное количество Stars (1-100000)");
+          }
+
+          // BUG FIX: Validate that recipient exists (resolvedRecipient is set)
+          if (!resolvedRecipient?.username) {
+            throw new Error("Получатель не найден или недействителен");
+          }
+
+          st.textContent = "Отправляем Stars через Fragment...";
+
           const d = await withTimeout(API.payWithBalance(tg?.initData || "", selectedPackage.stars, recipient));
-          if (!d?.ok) throw new Error(d?.error || "Ошибка сервера");
+          if (!d?.ok) {
+            // BUG FIX: Handle specific Fragment errors
+            if (d?.error?.includes("invalid")) {
+              throw new Error("Неверный юзернейм. Проверь @username получателя");
+            } else if (d?.error?.includes("balance")) {
+              throw new Error("Недостаточно средств на счёте. Пополни баланс");
+            } else if (d?.error?.includes("timeout")) {
+              throw new Error("API Fragment не ответил. Попробуй позже");
+            }
+            throw new Error(d?.error || "Ошибка сервера при обработке Stars");
+          }
+
+          // BUG FIX: Validate server response before updating balance
+          if (!d.order_id) throw new Error("Ошибка: заказ не создан на сервере");
+          if (typeof d.balance !== "number") throw new Error("Ошибка: не удалось обновить баланс");
+
           setRubBalance(d.balance, true);
 
           const orderData = {
@@ -1969,7 +2008,18 @@
             method: "Баланс ₽"
           };
 
-          saveOrder({ id: d.order_id, stars: selectedPackage.stars, itemLabel: orderData.item, target: recipient, rubAmount: rub, priceLabel: `${fmt(rub)} ₽`, method: "Баланс ₽", statusText: "✅ Оплачен", dateText: new Date().toLocaleString("ru-RU") });
+          // BUG FIX: Mark as "pending" until Fragment confirms, not "paid" immediately
+          saveOrder({
+            id: d.order_id,
+            stars: selectedPackage.stars,
+            itemLabel: orderData.item,
+            target: recipient,
+            rubAmount: rub,
+            priceLabel: `${fmt(rub)} ₽`,
+            method: "Баланс ₽",
+            statusText: "⏳ Fragment обработка",
+            dateText: new Date().toLocaleString("ru-RU")
+          });
 
           showThankYouModal(orderData);
           payModal.classList.remove("open");

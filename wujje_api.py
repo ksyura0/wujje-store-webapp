@@ -97,7 +97,7 @@ def get_gifts():
         data = load_nft_data()
         return jsonify({
             "ok": True,
-            "items": data.get("gifts", []),
+            "gifts": data.get("gifts", []),
             "total": len(data.get("gifts", []))
         })
     except Exception as e:
@@ -261,9 +261,80 @@ def admin_stats():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
-# ============================================
-# ERROR HANDLERS
-# ============================================
+@app.route('/api/resolve_username', methods=['POST'])
+def resolve_username():
+    """Resolve Telegram username to user data"""
+    try:
+        data = request.get_json()
+        username = data.get("username", "").strip()
+
+        if not username or not username.startswith("@"):
+            return jsonify({"ok": False, "error": "Invalid username format"}), 400
+
+        # TODO: Integration with Telegram API or Fragment to resolve username
+        # For now: mock response
+        return jsonify({
+            "ok": True,
+            "username": username,
+            "full_name": f"User {username}",
+            "avatar_url": "/avatars/default.png",
+            "status": "active"
+        })
+    except Exception as e:
+        logger.error(f"Error in resolve_username: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route('/api/pay_balance', methods=['POST'])
+def pay_balance():
+    """
+    Process payment from user balance (RUB or Stars)
+
+    Request body:
+    {
+        "initData": "telegram_init_data",
+        "stars": 100,
+        "target": "@username"
+    }
+    """
+    try:
+        data = request.get_json()
+        init_data = data.get("initData", "")
+        stars = data.get("stars")
+        target = data.get("target", "")
+
+        # Validate input
+        if not init_data:
+            return jsonify({"ok": False, "error": "Missing initData"}), 400
+
+        if not target or not target.startswith("@"):
+            return jsonify({"ok": False, "error": "Invalid target username"}), 400
+
+        if not isinstance(stars, (int, float)) or stars < 1 or stars > 100000:
+            return jsonify({"ok": False, "error": "Invalid stars amount (1-100000)"}), 400
+
+        # TODO: Validate initData with Telegram Bot API
+        # TODO: Check user balance in database
+        # TODO: Debit balance from user account
+        # TODO: Call Fragment API to send Stars to target
+        # TODO: Handle Fragment errors (invalid user, insufficient funds, timeout)
+
+        order_id = f"stars_{int(datetime.now().timestamp() * 1000)}"
+
+        # Mock success response
+        return jsonify({
+            "ok": True,
+            "order_id": order_id,
+            "stars": stars,
+            "target": target,
+            "status": "pending",
+            "balance": 1000  # TODO: Return actual user balance
+        })
+    except Exception as e:
+        logger.error(f"Error in pay_balance: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 
 @app.errorhandler(404)
 def not_found(error):
