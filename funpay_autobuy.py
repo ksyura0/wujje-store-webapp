@@ -299,7 +299,10 @@ class FunPayAutoBuy:
 
     def purchase_offer(self, offer: Dict, steam_login: str, amount_rub: float) -> Optional[str]:
         """
-        Purchase selected offer with Steam login by parsing and submitting real form
+        Purchase selected offer with Steam login via 2-step AJAX SBP protocol (method="21")
+
+        Step 1: Preview/validation with preview="1" to get JSON response
+        Step 2: Final purchase with preview="" to create order and handle redirects
 
         Args:
             offer: Offer dict from search_best_offer()
@@ -319,7 +322,7 @@ class FunPayAutoBuy:
                 logger.error(f"❌ Insufficient balance: have {balance}, need {offer['price']}")
                 return None
 
-            logger.info(f"💳 Processing purchase from {offer['seller_name']}...")
+            logger.info(f"💳 Processing purchase from {offer['seller_name']} via SBP (method=21)...")
 
             # Load offer page to extract form fields
             response = self.session.get(offer['offer_url'], timeout=15)
@@ -346,13 +349,6 @@ class FunPayAutoBuy:
             if hidden_fields:
                 logger.debug(f"Found hidden form fields: {hidden_fields}")
 
-            # Set payment fields according to real FunPay form structure
-            form_data['preview'] = ''  # Empty string to skip preview and create order directly
-            form_data['method'] = 'balance'  # Payment method: use FunPay internal balance
-            form_data['player'] = steam_login  # Steam login field name on FunPay is 'player'
-            form_data['amount'] = str(int(amount_rub))  # Amount in rubles
-            form_data['sum'] = ''  # Leave empty for auto-calculation on FunPay server
-
             # Determine form action URL
             form_action = form.get('action', '')
             if form_action.startswith('http'):
@@ -360,19 +356,74 @@ class FunPayAutoBuy:
             else:
                 form_url = urljoin(self.FUNPAY_BASE, form_action)
 
-            logger.info(f"📝 Submitting form to: {form_url}")
-            logger.info(f"   Form data: player={steam_login}, amount={amount_rub}, method=balance")
+            # ==================== STEP 1: Preview (Validation) ====================
+            logger.info(f"📝 Step 1: Preview validation")
 
-            # Submit purchase with Referer header and allow redirects
-            purchase_response = self.session.post(
+            form_data_step1 = form_data.copy()
+            form_data_step1['method'] = '21'  # SBP payment method
+            form_data_step1['player'] = steam_login
+            form_data_step1['amount'] = str(int(amount_rub))
+            form_data_step1['sum'] = ''  # Leave empty for auto-calculation
+            form_data_step1['preview'] = '1'  # Step 1: preview mode
+
+            logger.info(f"   Sending preview request with method=21, player={steam_login}, amount={amount_rub}")
+
+            preview_response = self.session.post(
                 form_url,
-                data=form_data,
+                data=form_data_step1,
                 timeout=20,
-                allow_redirects=True,
-                headers={'Referer': offer['offer_url']}
+                allow_redirects=False,
+                headers={
+                    'Referer': offer['offer_url'],
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             )
 
-            # Look for order ID in response (bukvennno-tsifrovoi ID like ABCD1234, ne tolko cifry)
+            logger.debug(f"Preview response status: {preview_response.status_code}")
+
+            # Parse JSON response from Step 1
+            try:
+                preview_json = preview_response.json()
+                logger.debug(f"Preview JSON response: {preview_json}")
+
+                if preview_json.get('error'):
+                    error_msg = preview_json.get('msg', 'Unknown error')
+                    error_details = preview_json.get('errors', {})
+                    logger.error(f"❌ Step 1 validation failed: {error_msg}")
+                    if error_details:
+                        logger.error(f"   Details: {error_details}")
+                    return None
+
+                logger.info(f"✅ Step 1 validation passed")
+
+            except Exception as e:
+                logger.warning(f"⚠️ Could not parse Step 1 response as JSON: {e}")
+                logger.debug(f"Response text: {preview_response.text[:200]}")
+
+            # ==================== STEP 2: Final Purchase ====================
+            logger.info(f"📝 Step 2: Final purchase with balance auto-debit")
+
+            form_data_step2 = form_data.copy()
+            form_data_step2['method'] = '21'  # SBP payment method
+            form_data_step2['player'] = steam_login
+            form_data_step2['amount'] = str(int(amount_rub))
+            form_data_step2['sum'] = ''  # Leave empty for auto-calculation
+            form_data_step2['preview'] = ''  # Step 2: empty preview = create order
+
+            logger.info(f"   Sending final purchase request")
+
+            purchase_response = self.session.post(
+                form_url,
+                data=form_data_step2,
+                timeout=20,
+                allow_redirects=True,
+                headers={
+                    'Referer': offer['offer_url'],
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            )
+
+            # Look for order ID in response (alphanumeric ID like ABCD1234)
             order_id = None
 
             # Try to find order ID in final redirect URL
@@ -380,19 +431,22 @@ class FunPayAutoBuy:
                 match = re.search(r'/orders/([A-Z0-9]+)/', purchase_response.url)
                 if match:
                     order_id = f"#{match.group(1)}"
+                    logger.info(f"✅ Order ID extracted from redirect URL: {order_id}")
 
-            # Try to find order ID in response content
+            # Try to find order ID in response content (if not found in URL)
             if not order_id:
                 content = purchase_response.text
                 # Look for order ID pattern like #ABCD1234 (alphanumeric)
                 match = re.search(r'#([A-Z0-9]+)', content)
                 if match:
                     order_id = f"#{match.group(1)}"
+                    logger.info(f"✅ Order ID extracted from HTML content: {order_id}")
 
             if not order_id:
                 logger.error(f"❌ Failed to extract order ID from response")
                 logger.debug(f"Response status: {purchase_response.status_code}")
                 logger.debug(f"Response URL: {purchase_response.url}")
+                logger.debug(f"Response text (first 500 chars): {purchase_response.text[:500]}")
 
                 # Try to extract and log error message from FunPay response
                 try:
@@ -411,11 +465,22 @@ class FunPayAutoBuy:
             logger.info(f"   Seller: {offer['seller_name']}")
             logger.info(f"   Amount: {amount_rub} ₽")
             logger.info(f"   Steam login: {steam_login}")
+            logger.info(f"   Payment method: SBP (метод 21)")
+
+            # Immediately start chat handler after successful purchase
+            logger.info(f"🤖 Starting auto-chat handler for {order_id}...")
+            chat_result = self.handle_order_chat(order_id, steam_login)
+            if chat_result == "completed":
+                logger.info(f"✅ Chat handler completed successfully for {order_id}")
+            else:
+                logger.info(f"⚠️ Chat handler did not detect completion (but order is created)")
 
             return order_id
 
         except Exception as e:
             logger.error(f"❌ Failed to purchase offer: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
             return None
 
     def handle_order_chat(self, funpay_order_id: str, steam_login: str, timeout_sec: int = 180, max_responses: int = 6) -> Optional[str]:
