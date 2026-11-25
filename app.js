@@ -90,77 +90,105 @@
 
     // PACKAGES is now guaranteed at window scope
 
-    // Build NFT collections from RAW_122_GIFTS with models
-    window.NFT_COLLECTIONS = (window.RAW_122_GIFTS || []).map(([title, floorTon]) => {
-      const baseFloor = Math.max(0.1, Number(floorTon) / 1000);
-      const baseFloorRub = tonFloorToRub(baseFloor);
-      const paletteIdx = Math.floor(Math.random() * 5);
-      const palette = window.PALETTES?.[paletteIdx] || ["#17112e", "#a855f7", "🎁"];
-      const bgHex = palette[0];
-      const accentHex = palette[1];
-      const symbol = palette[2];
+    // Load NFT collections from API with real data
+    window.NFT_COLLECTIONS = [];
 
-      // Generate 5 synthetic models with characteristics
-      const models = [
-        {
-          name: "Базовая",
-          rarity: "50%",
-          bg: "Фиолетовый",
-          pattern: "Монохром",
-          floorTon: baseFloor,
-          floorRub: baseFloorRub,
-          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
-        },
-        {
-          name: "Редкая",
-          rarity: "30%",
-          bg: "Синий",
-          pattern: "Узор",
-          floorTon: baseFloor * 1.5,
-          floorRub: Math.round(baseFloorRub * 1.5),
-          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Ccircle cx='100' cy='100' r='80' fill='${encodeURIComponent(accentHex)}' opacity='0.3'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
-        },
-        {
-          name: "Эпическая",
-          rarity: "15%",
-          bg: "Золотой",
-          pattern: "Шумовой",
-          floorTon: baseFloor * 2.5,
-          floorRub: Math.round(baseFloorRub * 2.5),
-          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Crect x='20' y='20' width='160' height='160' fill='none' stroke='${encodeURIComponent(accentHex)}' stroke-width='3'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
-        },
-        {
-          name: "Легендарная",
-          rarity: "4%",
-          bg: "Красный",
-          pattern: "Гравюра",
-          floorTon: baseFloor * 4,
-          floorRub: Math.round(baseFloorRub * 4),
-          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Cpolygon points='100,30 170,80 170,170 30,170 30,80' fill='none' stroke='${encodeURIComponent(accentHex)}' stroke-width='2'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
-        },
-        {
-          name: "Мифическая",
-          rarity: "1%",
-          bg: "Радужный",
-          pattern: "Голограмма",
-          floorTon: baseFloor * 7,
-          floorRub: Math.round(baseFloorRub * 7),
-          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Ccircle cx='100' cy='100' r='70' fill='none' stroke='${encodeURIComponent(accentHex)}' stroke-width='2'/%3E%3Ccircle cx='100' cy='100' r='50' fill='none' stroke='${encodeURIComponent(accentHex)}' stroke-width='1' opacity='0.5'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
-        }
-      ];
+    async function initNftCollections() {
+      const apiData = await API.getGifts();
+      if (apiData?.gifts && Array.isArray(apiData.gifts)) {
+        window.NFT_COLLECTIONS = apiData.gifts.map((gift) => {
+          const floorTon = Number(gift.floor_ton || gift.floorTon || 0);
+          const floorRub = Number(gift.floor_rub || gift.floorRub || 0);
+          const imageUrl = gift.image_url || gift.img || "";
+          const attrs = gift.attributes || {};
 
-      return {
-        title,
-        floorTon: baseFloor,
-        floorRub: baseFloorRub,
-        symbol,
-        bgHex,
-        accentHex,
-        // Collection thumbnail image
-        img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='160' height='160'/%3E%3Ctext x='50%25' y='50%25' font-size='60' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`,
-        models
-      };
-    });
+          // Fallback SVG if image not available
+          const fallbackSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23333' width='160' height='160' rx='8'/%3E%3Ctext x='50%25' y='50%25' font-size='40' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3E🎁%3C/text%3E%3C/svg%3E`;
+
+          return {
+            id: gift.id,
+            title: gift.title,
+            floorTon: floorTon,
+            floorRub: floorRub,
+            rarity: gift.rarity || "common",
+            marketplace: gift.marketplace || "fragment",
+            img: imageUrl || fallbackSvg,
+            models: [
+              {
+                name: "Стандартная",
+                rarity: "50%",
+                bg: attrs.background || "#333",
+                pattern: attrs.pattern || "standard",
+                floorTon: floorTon,
+                floorRub: floorRub,
+                img: imageUrl || fallbackSvg
+              },
+              {
+                name: "Редкая",
+                rarity: "30%",
+                bg: attrs.background || "#555",
+                pattern: attrs.pattern || "rare",
+                floorTon: Math.round(floorTon * 1.5 * 100) / 100,
+                floorRub: Math.round(floorRub * 1.5),
+                img: imageUrl || fallbackSvg
+              },
+              {
+                name: "Эпическая",
+                rarity: "15%",
+                bg: attrs.background || "#777",
+                pattern: attrs.pattern || "epic",
+                floorTon: Math.round(floorTon * 2.5 * 100) / 100,
+                floorRub: Math.round(floorRub * 2.5),
+                img: imageUrl || fallbackSvg
+              },
+              {
+                name: "Легендарная",
+                rarity: "4%",
+                bg: attrs.background || "#aaa",
+                pattern: attrs.pattern || "legendary",
+                floorTon: Math.round(floorTon * 4 * 100) / 100,
+                floorRub: Math.round(floorRub * 4),
+                img: imageUrl || fallbackSvg
+              },
+              {
+                name: "Мифическая",
+                rarity: "1%",
+                bg: attrs.background || "#ccc",
+                pattern: attrs.pattern || "mythic",
+                floorTon: Math.round(floorTon * 7 * 100) / 100,
+                floorRub: Math.round(floorRub * 7),
+                img: imageUrl || fallbackSvg
+              }
+            ]
+          };
+        });
+      } else {
+        // Fallback to local data if API fails
+        window.NFT_COLLECTIONS = (window.RAW_122_GIFTS || []).map(([title, floorTon]) => {
+          const baseFloor = Math.max(0.1, Number(floorTon) / 1000);
+          const baseFloorRub = tonFloorToRub(baseFloor);
+          const fallbackSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23333' width='160' height='160' rx='8'/%3E%3Ctext x='50%25' y='50%25' font-size='40' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3E🎁%3C/text%3E%3C/svg%3E`;
+
+          return {
+            id: title.toLowerCase().replace(/\\s+/g, '-'),
+            title,
+            floorTon: baseFloor,
+            floorRub: baseFloorRub,
+            rarity: "common",
+            marketplace: "fallback",
+            img: fallbackSvg,
+            models: [
+              { name: "Стандартная", rarity: "50%", floorTon: baseFloor, floorRub: baseFloorRub, img: fallbackSvg },
+              { name: "Редкая", rarity: "30%", floorTon: Math.round(baseFloor * 1.5 * 100) / 100, floorRub: Math.round(baseFloorRub * 1.5), img: fallbackSvg },
+              { name: "Эпическая", rarity: "15%", floorTon: Math.round(baseFloor * 2.5 * 100) / 100, floorRub: Math.round(baseFloorRub * 2.5), img: fallbackSvg },
+              { name: "Легендарная", rarity: "4%", floorTon: Math.round(baseFloor * 4 * 100) / 100, floorRub: Math.round(baseFloorRub * 4), img: fallbackSvg },
+              { name: "Мифическая", rarity: "1%", floorTon: Math.round(baseFloor * 7 * 100) / 100, floorRub: Math.round(baseFloorRub * 7), img: fallbackSvg }
+            ]
+          };
+        });
+      }
+    }
+    initNftCollections();
 
     // Build NFT collections and CATEGORIES from catalog data
     window.CATEGORIES = [
@@ -643,12 +671,18 @@
       const filtered = NFT_COLLECTIONS.filter((c) => !q || c.title.toLowerCase().includes(q));
       const grid = document.getElementById("nftCollectionsGrid");
 
+      const getFallbackImage = (title) => {
+        const symbol = "🎁";
+        return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23333' width='160' height='160' rx='8'/%3E%3Ctext x='50%25' y='50%25' font-size='40' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`;
+      };
+
       grid.innerHTML = filtered.map((col) => {
         const realIdx = NFT_COLLECTIONS.indexOf(col);
+        const fallback = getFallbackImage(col.title);
         return `
           <div class="nft-card">
             <div class="nft-img-wrap" data-col-idx="${realIdx}">
-              <img src="${col.img}" alt="${col.title}" onerror="this.style.opacity='0.3'; this.style.filter='grayscale(100%)';"/>
+              <img src="${col.img}" alt="${col.title}" onerror="this.src='${fallback}';" loading="lazy"/>
               <button type="button" class="bolt-btn nft-quick-bolt" data-col-idx="${realIdx}" title="Быстрая покупка">⚡</button>
             </div>
             <div class="nft-body" data-col-idx="${realIdx}">
