@@ -90,15 +90,77 @@
 
     // PACKAGES is now guaranteed at window scope
 
-    // Build NFT collections from RAW_122_GIFTS
-    window.NFT_COLLECTIONS = (window.RAW_122_GIFTS || []).map(([title, floorTon]) => ({
-      title,
-      floorTon: Math.max(0.1, Number(floorTon) / 1000),
-      floorRub: tonFloorToRub(Math.max(0.1, Number(floorTon) / 1000)),
-      symbol: window.PALETTES?.[Math.floor(Math.random() * 5)]?.[2] || "🎁",
-      bgHex: window.PALETTES?.[Math.floor(Math.random() * 5)]?.[0] || "#17112e",
-      accentHex: window.PALETTES?.[Math.floor(Math.random() * 5)]?.[1] || "#a855f7"
-    }));
+    // Build NFT collections from RAW_122_GIFTS with models
+    window.NFT_COLLECTIONS = (window.RAW_122_GIFTS || []).map(([title, floorTon]) => {
+      const baseFloor = Math.max(0.1, Number(floorTon) / 1000);
+      const baseFloorRub = tonFloorToRub(baseFloor);
+      const paletteIdx = Math.floor(Math.random() * 5);
+      const palette = window.PALETTES?.[paletteIdx] || ["#17112e", "#a855f7", "🎁"];
+      const bgHex = palette[0];
+      const accentHex = palette[1];
+      const symbol = palette[2];
+
+      // Generate 5 synthetic models with characteristics
+      const models = [
+        {
+          name: "Базовая",
+          rarity: "50%",
+          bg: "Фиолетовый",
+          pattern: "Монохром",
+          floorTon: baseFloor,
+          floorRub: baseFloorRub,
+          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
+        },
+        {
+          name: "Редкая",
+          rarity: "30%",
+          bg: "Синий",
+          pattern: "Узор",
+          floorTon: baseFloor * 1.5,
+          floorRub: Math.round(baseFloorRub * 1.5),
+          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Ccircle cx='100' cy='100' r='80' fill='${encodeURIComponent(accentHex)}' opacity='0.3'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
+        },
+        {
+          name: "Эпическая",
+          rarity: "15%",
+          bg: "Золотой",
+          pattern: "Шумовой",
+          floorTon: baseFloor * 2.5,
+          floorRub: Math.round(baseFloorRub * 2.5),
+          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Crect x='20' y='20' width='160' height='160' fill='none' stroke='${encodeURIComponent(accentHex)}' stroke-width='3'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
+        },
+        {
+          name: "Легендарная",
+          rarity: "4%",
+          bg: "Красный",
+          pattern: "Гравюра",
+          floorTon: baseFloor * 4,
+          floorRub: Math.round(baseFloorRub * 4),
+          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Cpolygon points='100,30 170,80 170,170 30,170 30,80' fill='none' stroke='${encodeURIComponent(accentHex)}' stroke-width='2'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
+        },
+        {
+          name: "Мифическая",
+          rarity: "1%",
+          bg: "Радужный",
+          pattern: "Голограмма",
+          floorTon: baseFloor * 7,
+          floorRub: Math.round(baseFloorRub * 7),
+          img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='200' height='200'/%3E%3Ccircle cx='100' cy='100' r='70' fill='none' stroke='${encodeURIComponent(accentHex)}' stroke-width='2'/%3E%3Ccircle cx='100' cy='100' r='50' fill='none' stroke='${encodeURIComponent(accentHex)}' stroke-width='1' opacity='0.5'/%3E%3Ctext x='50%25' y='50%25' font-size='80' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`
+        }
+      ];
+
+      return {
+        title,
+        floorTon: baseFloor,
+        floorRub: baseFloorRub,
+        symbol,
+        bgHex,
+        accentHex,
+        // Collection thumbnail image
+        img: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='${encodeURIComponent(bgHex)}' width='160' height='160'/%3E%3Ctext x='50%25' y='50%25' font-size='60' fill='${encodeURIComponent(accentHex)}' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`,
+        models
+      };
+    });
 
     // Build NFT collections and CATEGORIES from catalog data
     window.CATEGORIES = [
@@ -586,12 +648,12 @@
         return `
           <div class="nft-card">
             <div class="nft-img-wrap" data-col-idx="${realIdx}">
-              <img src="${col.img}" alt="${col.title}">
+              <img src="${col.img}" alt="${col.title}" onerror="this.style.opacity='0.3'; this.style.filter='grayscale(100%)';"/>
               <button type="button" class="bolt-btn nft-quick-bolt" data-col-idx="${realIdx}" title="Быстрая покупка">⚡</button>
             </div>
             <div class="nft-body" data-col-idx="${realIdx}">
               <div class="nft-title">${col.title}</div>
-              <div class="nft-meta">${col.models.length} модели · В наличии</div>
+              <div class="nft-meta">${col.models?.length || 0} модели · В наличии</div>
               <div class="nft-floor-row">
                 <div>
                   <div class="nft-price">Флор ${fmt(col.floorRub)} ₽</div>
@@ -651,7 +713,7 @@
             <span class="spec-chip">Узор: <b>${m.pattern}</b></span>
           </div>
           <div class="model-photo-box">
-            <img src="${m.img}" alt="${col.title} — ${m.name}">
+            <img src="${m.img}" alt="${col.title} — ${m.name}" onerror="this.style.opacity='0.5'; this.style.filter='blur(2px)';"/>
             <button type="button" class="bolt-btn model-bolt" data-m-idx="${mIdx}" title="Быстрая покупка">⚡</button>
           </div>
           <div class="model-footer">
@@ -1603,10 +1665,24 @@
         st.textContent = "";
         document.getElementById("topupQrMeta").innerHTML = `Заявка <b>#${d.topup_id}</b> · Сумма: <b>${fmt(amount)} ₽</b>`;
         document.getElementById("topupQrImg").src = `${CONFIG.API_BASE}/api/sbp_qr.png?t=${Date.now()}`;
+        document.getElementById("topupQrImg").onerror = () => {
+          document.getElementById("topupQrImg").alt = "QR недоступен";
+        };
         document.getElementById("topupPayLink").href = d.pay_url || CONFIG.DEFAULT_PAY_URL;
         document.getElementById("topupQrBox").classList.add("open");
       } else {
-        st.textContent = !isOnline() ? "Нет интернета." : "Открой приложение внутри Telegram.";
+        // Show real error instead of masking it
+        let errorMsg = "Ошибка при создании заявки";
+        if (!isOnline()) {
+          errorMsg = "❌ Нет интернета";
+        } else if (d?.error) {
+          errorMsg = `❌ ${d.error}`;
+        } else if (!tg?.initData) {
+          errorMsg = "❌ Откройте приложение внутри Telegram";
+        } else {
+          errorMsg = "❌ Сервер недоступен — проверьте соединение";
+        }
+        st.textContent = errorMsg;
       }
 
       btn.disabled = false;
@@ -1778,7 +1854,7 @@
     // ===== END BLOCK 5 =====
 
     document.getElementById("payWithBalanceBtn").addEventListener("click", async () => {
-      if (window.isPayingBalance) return;
+      if (window.isPayingBalance) return; // Prevent double-click
       window.isPayingBalance = true;
       const btn = document.getElementById("payWithBalanceBtn");
       const wasDisabled = btn.disabled;
@@ -1815,7 +1891,10 @@
           };
 
           const d = await API.call("/api/pay_balance", steamPayload);
-          if (!d?.ok) throw new Error(d?.error || "Ошибка при обработке Steam заказа");
+          if (!d?.ok) {
+            const errorMsg = d?.error || "Ошибка при обработке Steam заказа";
+            throw new Error(errorMsg);
+          }
 
           setRubBalance(rubBalance - needRub, true);
 
