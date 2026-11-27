@@ -2197,8 +2197,9 @@
     if (typeof renderRecentUsers === 'function') renderRecentUsers();
     if (typeof renderCategories === 'function') renderCategories();
     if (typeof renderPackages === 'function') renderPackages();
-    syncBalance();
-    syncReferralInfo();
+    if (typeof syncBalance === 'function') syncBalance();
+    if (typeof syncReferralInfo === 'function') syncReferralInfo();
+    switchScreen("hub", "Wujje Store", "Выдача 24/7 · В наличии");
 
     // Hide preloader after 350ms
     setTimeout(() => {
