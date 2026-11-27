@@ -1490,7 +1490,7 @@
     }
 
     function setRubBalance(val, animate = false) {
-      const old = rubBalance;
+      const old = typeof rubBalance !== 'undefined' ? rubBalance : 0;
       rubBalance = val;
       localStorage.setItem(CONFIG.BALANCE_KEY, String(rubBalance));
       document.getElementById("rubBalanceText").textContent = `${fmt(rubBalance)} ₽`;
@@ -2032,7 +2032,7 @@
             throw new Error(errorMsg);
           }
 
-          setRubBalance(rubBalance - needRub, true);
+          setRubBalance((typeof rubBalance !== 'undefined' ? rubBalance : 0) - needRub, true);
 
           const formattedRecipient = `Steam: ${steamData.steam_login} · ${fmt(needRub)} ₽ (RUB)`;
           saveOrder({
@@ -2116,7 +2116,7 @@
         }
         // Other products
         else {
-          setRubBalance(rubBalance - rub, true);
+          setRubBalance((typeof rubBalance !== 'undefined' ? rubBalance : 0) - rub, true);
 
           const orderData = {
             orderId: orderId,
