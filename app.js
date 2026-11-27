@@ -2243,4 +2243,3 @@
     } else {
       console.log("🚀 Document already loaded: app.js fully initialized, renderCategories called");
     }
-  })();
