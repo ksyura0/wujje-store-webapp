@@ -620,6 +620,7 @@
 
     function renderCategories() {
       const grid = document.getElementById("categoriesGrid");
+      if (!grid) return;
       const catList = window.CATEGORIES || [];
       const list = activeFilter === "all" ? catList : catList.filter((c) => c.group === activeFilter);
       grid.innerHTML = "";
@@ -1382,6 +1383,7 @@
 
     function renderPackages() {
       const grid = document.getElementById("packagesGrid");
+      if (!grid) return;
       grid.innerHTML = "";
       PACKAGES.forEach((pkg, idx) => {
         const b = document.createElement("button");
