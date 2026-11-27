@@ -1520,7 +1520,7 @@
       if (!tg?.initData) return;
       const data = await API.syncBalance(tg.initData);
       if (data?.ok && typeof data.balance === "number") {
-        setRubBalance(data.balance, balanceInitialized);
+        setRubBalance(data.balance, typeof balanceInitialized !== 'undefined' ? balanceInitialized : false);
         balanceInitialized = true;
       }
     }
