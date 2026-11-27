@@ -1513,7 +1513,7 @@
         if (delta > 0) { pill.classList.add("pulse-green"); setTimeout(() => pill.classList.remove("pulse-green"), 900); }
         setTimeout(() => f.remove(), 1250);
       }
-      if (currentView === "profile") renderProfile();
+      if (typeof currentView !== 'undefined' && currentView === "profile") renderProfile();
     }
 
     async function syncBalance() {
