@@ -167,12 +167,6 @@
         // Fallback: empty feed if API fails
         window.GIFTS_FEED = [];
       }
-    }
-            ]
-          };
-        });
-      }
-    }
     initGiftsFeed();
 
     // Build NFT collections and CATEGORIES from catalog data
@@ -265,11 +259,13 @@
           { id: "steam_5000", title: "5 000 ₽ пополнения Steam", sub: "Автозачисление за 1–3 минуты · Рублевый аккаунт", priceText: "5 450 ₽", rub: 5000, tag: "Выгодно", inputLabel: "Логин Steam", inputPlaceholder: "steam_username", allowSelf: false, action: "openProduct" }
         ]
       }
-    ].map((cat) => ({
+    ];
+
+    // Add TON conversion to items
+    window.CATEGORIES = window.CATEGORIES.map((cat) => ({
       ...cat,
       items: cat.items ? cat.items.map((it) => (it.rub ? { ...it, ton: rubToTonSafe(it.rub), subPriceText: it.subPriceText || `${rubToTonSafe(it.rub)} TON` } : it)) : []
     }));
-
 
     // Network status check
     const isOnline = () => navigator.onLine;
@@ -2219,5 +2215,14 @@
         loader.style.pointerEvents = "none";
       }
     }, 1500);
+
+    // Emergency: hide preloader on any error
+    window.addEventListener("error", () => {
+      const loader = document.getElementById("appLoader");
+      if (loader) {
+        loader.style.opacity = "0";
+        loader.style.pointerEvents = "none";
+      }
+    });
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
