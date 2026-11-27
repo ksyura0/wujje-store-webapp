@@ -2191,9 +2191,9 @@
     });
 
     if (typeof window.applyTheme === 'function') window.applyTheme(typeof currentTheme !== 'undefined' ? currentTheme : undefined, false);
-    setRubBalance(rubBalance, false);
-    updateOrdersBadge();
-    updateHubQuote();
+    if (typeof setRubBalance === 'function') setRubBalance(typeof rubBalance !== 'undefined' ? rubBalance : 0, false);
+    if (typeof updateOrdersBadge === 'function') updateOrdersBadge();
+    if (typeof updateHubQuote === 'function') updateHubQuote();
     renderRecentUsers();
     renderCategories();
     renderPackages();
