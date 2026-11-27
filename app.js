@@ -2197,8 +2197,10 @@
     if (typeof updateOrdersBadge === 'function') updateOrdersBadge();
     if (typeof updateHubQuote === 'function') updateHubQuote();
     if (typeof renderRecentUsers === 'function') renderRecentUsers();
-    if (!window.CATEGORIES || window.CATEGORIES.length === 0) window.CATEGORIES = window.CATEGORIES_BASE || [];
-    if (!window.PACKAGES || window.PACKAGES.length === 0) window.PACKAGES = (window.PACKAGES_BASE || []).map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
+    // Force load data from catalog.js before rendering
+    window.CATEGORIES = window.CATEGORIES_BASE ? [...window.CATEGORIES_BASE] : [];
+    window.PACKAGES = (window.PACKAGES_BASE || []).map((p) => ({ ...p, ton: rubToTonSafe(p.rub) }));
+    activeFilter = "all";
     if (typeof renderCategories === 'function') renderCategories();
     if (typeof renderPackages === 'function') renderPackages();
     if (typeof syncBalance === 'function') syncBalance();
