@@ -530,17 +530,6 @@
     document.getElementById("backBtn").addEventListener("click", goBack);
     try { tg?.BackButton?.onClick?.(goBack); } catch (e) {}
 
-    document.querySelectorAll(".dock-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        haptic("light");
-        const tab = btn.dataset.tab;
-        if (tab === "hub") { if (typeof switchScreen === 'function') switchScreen("hub", "Wujje Store", "Выдача 24/7 · В наличии"); }
-        if (tab === "orders") { if (typeof renderOrders === 'function') renderOrders(); if (typeof switchScreen === 'function') switchScreen("orders", "Мои заказы", "История покупок"); }
-        if (tab === "profile") { if (typeof renderProfile === 'function') renderProfile(); if (typeof syncReferralInfo === 'function') syncReferralInfo(); if (typeof switchScreen === 'function') switchScreen("profile", "Профиль", "Ранги, темы и рефералка"); }
-        if (tab === "faq") { if (typeof switchScreen === 'function') switchScreen("faq", "Вопросы и ответы", "Поддержка и оферта"); }
-      });
-    });
-
     function renderWeb3Info() {
       const statusEl = document.getElementById("web3Status");
       const balanceEl = document.getElementById("web3Balance");
@@ -2206,6 +2195,18 @@
     if (typeof syncBalance === 'function') syncBalance();
     if (typeof syncReferralInfo === 'function') syncReferralInfo();
     if (typeof switchScreen === 'function') switchScreen("hub", "Wujje Store", "Выдача 24/7 · В наличии");
+
+    // Bind dock-btn click handlers AFTER all functions are defined and DOM ready
+    document.querySelectorAll(".dock-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        haptic("light");
+        const tab = btn.dataset.tab;
+        if (tab === "hub") { if (typeof switchScreen === 'function') switchScreen("hub", "Wujje Store", "Выдача 24/7 · В наличии"); }
+        if (tab === "orders") { if (typeof renderOrders === 'function') renderOrders(); if (typeof switchScreen === 'function') switchScreen("orders", "Мои заказы", "История покупок"); }
+        if (tab === "profile") { if (typeof renderProfile === 'function') renderProfile(); if (typeof syncReferralInfo === 'function') syncReferralInfo(); if (typeof switchScreen === 'function') switchScreen("profile", "Профиль", "Ранги, темы и рефералка"); }
+        if (tab === "faq") { if (typeof switchScreen === 'function') switchScreen("faq", "Вопросы и ответы", "Поддержка и оферта"); }
+      });
+    });
 
     // Hide preloader after 350ms
     setTimeout(() => {
