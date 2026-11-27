@@ -584,9 +584,9 @@
       }
     });
 
-    if (currentView === "nft-list") {
-      renderNftList(document.getElementById("nftSearchInput")?.value || "");
-    } else if (currentView === "nft-models" && activeNftCollection) {
+    if ((typeof currentView !== 'undefined' ? currentView : 'hub') === "gifts-feed") {
+      renderGiftsFeed(document.getElementById("nftSearchInput")?.value || "");
+    } else if ((typeof currentView !== 'undefined' ? currentView : 'hub') === "gift-detail" && activeGift) {
       const updatedCol = NFT_COLLECTIONS.find((c) => c.title === activeNftCollection.title);
       if (updatedCol) openNftModels(updatedCol);
     }

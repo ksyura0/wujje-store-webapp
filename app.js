@@ -2189,7 +2189,7 @@
       }
     });
 
-    applyTheme(currentTheme, false);
+    if (typeof applyTheme === 'function') applyTheme(currentTheme, false);
     setRubBalance(rubBalance, false);
     updateOrdersBadge();
     updateHubQuote();
