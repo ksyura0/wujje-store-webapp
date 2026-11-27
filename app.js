@@ -458,6 +458,7 @@
       </svg>`;
     }
 
+
     function applyTheme(themeId, save = true) {
       currentTheme = THEMES.some((t) => t.id === themeId) ? themeId : "violet";
       document.documentElement.setAttribute("data-theme", currentTheme);
@@ -2189,7 +2190,7 @@
       }
     });
 
-    if (typeof applyTheme === 'function') applyTheme(currentTheme, false);
+    if (typeof window.applyTheme === 'function') window.applyTheme(typeof currentTheme !== 'undefined' ? currentTheme : undefined, false);
     setRubBalance(rubBalance, false);
     updateOrdersBadge();
     updateHubQuote();
