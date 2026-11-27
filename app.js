@@ -2194,9 +2194,9 @@
     if (typeof setRubBalance === 'function') setRubBalance(typeof rubBalance !== 'undefined' ? rubBalance : 0, false);
     if (typeof updateOrdersBadge === 'function') updateOrdersBadge();
     if (typeof updateHubQuote === 'function') updateHubQuote();
-    renderRecentUsers();
-    renderCategories();
-    renderPackages();
+    if (typeof renderRecentUsers === 'function') renderRecentUsers();
+    if (typeof renderCategories === 'function') renderCategories();
+    if (typeof renderPackages === 'function') renderPackages();
     syncBalance();
     syncReferralInfo();
 
