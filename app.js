@@ -51,6 +51,39 @@
     fetchTonRate();
     setInterval(fetchTonRate, 300000); // Update every 5 minutes
 
+    // Lottie animation handler for NFT gifts
+    const animationInstances = {};
+    function playLottieAnimation(container, animationUrl) {
+      if (!container || !animationUrl) return;
+
+      const containerId = container.id || `anim-${Math.random().toString(36).substr(2, 9)}`;
+      if (!container.id) container.id = containerId;
+
+      // Stop any existing animation in this container
+      if (animationInstances[containerId]) {
+        animationInstances[containerId].stop();
+        animationInstances[containerId].destroy();
+        delete animationInstances[containerId];
+      }
+
+      // Clear container
+      container.innerHTML = "";
+
+      try {
+        if (window.lottie) {
+          animationInstances[containerId] = window.lottie.loadAnimation({
+            container: container,
+            renderer: "svg",
+            autoplay: true,
+            loop: true,
+            path: animationUrl
+          });
+        }
+      } catch (e) {
+        // Animation failed, container will show fallback image
+      }
+    }
+
     const tonFloorToRub = (ton) => Math.max(150, Math.round(Number(ton) * currentTonRate * CONFIG.SAFE_MARKUP));
     const rubToTonSafe = (rub) => Math.max(0.05, Number((Number(rub) / currentTonRate).toFixed(2)));
 
@@ -92,18 +125,58 @@
 
     // Load NFT collections from API with real data
     window.NFT_COLLECTIONS = [];
+    window.ADMIN_FLAG = false;  // Store admin status globally
 
     async function initNftCollections() {
       const apiData = await API.getGifts();
+
+      // Extract admin flag from API response
+      if (apiData?.is_admin === true) {
+        window.ADMIN_FLAG = true;
+      }
+
       if (apiData?.gifts && Array.isArray(apiData.gifts)) {
         window.NFT_COLLECTIONS = apiData.gifts.map((gift) => {
+          // Extract floor prices (actual or computed)
           const floorTon = Number(gift.floor_ton || gift.floorTon || 0);
           const floorRub = Number(gift.floor_rub || gift.floorRub || 0);
           const imageUrl = gift.image_url || gift.img || "";
-          const attrs = gift.attributes || {};
+          const animationUrl = gift.animation_url || gift.sticker_tgs || "";
+          const marketUrl = gift.admin_market_url || gift.market_url || "";
+          const slug = gift.slug || gift.id || "";
 
           // Fallback SVG if image not available
           const fallbackSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23333' width='160' height='160' rx='8'/%3E%3Ctext x='50%25' y='50%25' font-size='40' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3E🎁%3C/text%3E%3C/svg%3E`;
+
+          // Process real models from API, or fallback to creating synthetic ones
+          let models = [];
+          if (gift.models && Array.isArray(gift.models) && gift.models.length > 0) {
+            // Use real models from API
+            models = gift.models.map((model) => ({
+              name: model.model || model.name || "Модель",
+              rarity: model.rarity || "common",
+              bg: model.backdrop || model.attributes?.background || "#333",
+              pattern: model.attributes?.pattern || "standard",
+              floorTon: Number(model.price_ton || model.floor_ton || floorTon),
+              floorRub: Number(model.price_rub || model.floor_rub || floorRub),
+              img: model.image_url || model.img || imageUrl || fallbackSvg,
+              animationUrl: model.animation_url || animationUrl
+            }));
+          } else {
+            // Fallback: create synthetic models if none provided
+            models = [
+              {
+                name: "Стандартная",
+                rarity: "50%",
+                bg: "#333",
+                pattern: "standard",
+                floorTon: floorTon,
+                floorRub: floorRub,
+                img: imageUrl || fallbackSvg,
+                animationUrl: animationUrl
+              }
+            ];
+          }
 
           return {
             id: gift.id,
@@ -113,53 +186,10 @@
             rarity: gift.rarity || "common",
             marketplace: gift.marketplace || "fragment",
             img: imageUrl || fallbackSvg,
-            models: [
-              {
-                name: "Стандартная",
-                rarity: "50%",
-                bg: attrs.background || "#333",
-                pattern: attrs.pattern || "standard",
-                floorTon: floorTon,
-                floorRub: floorRub,
-                img: imageUrl || fallbackSvg
-              },
-              {
-                name: "Редкая",
-                rarity: "30%",
-                bg: attrs.background || "#555",
-                pattern: attrs.pattern || "rare",
-                floorTon: Math.round(floorTon * 1.5 * 100) / 100,
-                floorRub: Math.round(floorRub * 1.5),
-                img: imageUrl || fallbackSvg
-              },
-              {
-                name: "Эпическая",
-                rarity: "15%",
-                bg: attrs.background || "#777",
-                pattern: attrs.pattern || "epic",
-                floorTon: Math.round(floorTon * 2.5 * 100) / 100,
-                floorRub: Math.round(floorRub * 2.5),
-                img: imageUrl || fallbackSvg
-              },
-              {
-                name: "Легендарная",
-                rarity: "4%",
-                bg: attrs.background || "#aaa",
-                pattern: attrs.pattern || "legendary",
-                floorTon: Math.round(floorTon * 4 * 100) / 100,
-                floorRub: Math.round(floorRub * 4),
-                img: imageUrl || fallbackSvg
-              },
-              {
-                name: "Мифическая",
-                rarity: "1%",
-                bg: attrs.background || "#ccc",
-                pattern: attrs.pattern || "mythic",
-                floorTon: Math.round(floorTon * 7 * 100) / 100,
-                floorRub: Math.round(floorRub * 7),
-                img: imageUrl || fallbackSvg
-              }
-            ]
+            animationUrl: animationUrl,
+            slug: slug,
+            marketUrl: marketUrl,
+            models: models
           };
         });
       } else {
@@ -679,6 +709,22 @@
       grid.innerHTML = filtered.map((col) => {
         const realIdx = NFT_COLLECTIONS.indexOf(col);
         const fallback = getFallbackImage(col.title);
+
+        // Build admin links if applicable
+        let adminLinksHtml = "";
+        if (window.ADMIN_FLAG && (col.slug || col.marketUrl)) {
+          let adminLinks = [];
+          if (col.slug) {
+            adminLinks.push(`<a href="https://t.me/nft/${col.slug}" target="_blank" rel="noopener" style="font-size:11px; color:#34d399; padding:4px 8px; background:rgba(52,211,153,0.1); border-radius:3px; text-decoration:none;">📱 t.me/nft</a>`);
+          }
+          if (col.marketUrl) {
+            adminLinks.push(`<a href="${col.marketUrl}" target="_blank" rel="noopener" style="font-size:11px; color:#a855f7; padding:4px 8px; background:rgba(168,85,247,0.1); border-radius:3px; text-decoration:none;">🔗 Маркет</a>`);
+          }
+          if (adminLinks.length > 0) {
+            adminLinksHtml = `<div style="display:flex; gap:4px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.1); margin-top:6px;">${adminLinks.join("")}</div>`;
+          }
+        }
+
         return `
           <div class="nft-card">
             <div class="nft-img-wrap" data-col-idx="${realIdx}">
@@ -695,6 +741,7 @@
                 </div>
                 <span class="tag-pill">Модели →</span>
               </div>
+              ${adminLinksHtml}
             </div>
           </div>
         `;
@@ -702,7 +749,7 @@
 
       grid.querySelectorAll(".nft-img-wrap, .nft-body").forEach((el) => {
         el.addEventListener("click", (e) => {
-          if (e.target.closest(".bolt-btn")) return;
+          if (e.target.closest(".bolt-btn") || e.target.closest("a")) return;
           haptic("light");
           openNftModels(NFT_COLLECTIONS[Number(el.dataset.colIdx)]);
         });
@@ -738,7 +785,20 @@
       document.getElementById("nftColFloorInfo").textContent = `Базовый флор: ${fmt(col.floorRub)} ₽ (${col.floorTon} TON) · Редкие модели дороже`;
 
       const box = document.getElementById("nftModelsContainer");
-      box.innerHTML = col.models.map((m, mIdx) => `
+      box.innerHTML = col.models.map((m, mIdx) => {
+        // Build model card HTML with animation support
+        let imageHtml = `<img src="${m.img}" alt="${col.title} — ${m.name}" onerror="this.style.opacity='0.5'; this.style.filter='blur(2px)';"/>`;
+
+        // If animation URL exists, add a Lottie container (placeholder for future implementation)
+        if (m.animationUrl) {
+          imageHtml = `
+            <div class="model-animation-container" data-animation-url="${m.animationUrl}">
+              ${imageHtml}
+            </div>
+          `;
+        }
+
+        return `
         <div class="model-card">
           <div class="model-specs-bar">
             <span class="spec-chip">Модель: <b>${m.name}</b></span>
@@ -747,7 +807,7 @@
             <span class="spec-chip">Узор: <b>${m.pattern}</b></span>
           </div>
           <div class="model-photo-box">
-            <img src="${m.img}" alt="${col.title} — ${m.name}" onerror="this.style.opacity='0.5'; this.style.filter='blur(2px)';"/>
+            ${imageHtml}
             <button type="button" class="bolt-btn model-bolt" data-m-idx="${mIdx}" title="Быстрая покупка">⚡</button>
           </div>
           <div class="model-footer">
@@ -757,8 +817,18 @@
             </div>
             <button type="button" class="hero-btn model-buy-btn" data-m-idx="${mIdx}" style="padding:9px 13px; font-size:12px;">⚡ Купить модель</button>
           </div>
+          ${col.slug && window.ADMIN_FLAG && col.marketUrl ? `
+          <div class="model-admin-row" style="display:flex; gap:6px; padding:8px 0; border-top:1px solid rgba(255,255,255,0.1);">
+            <a href="https://t.me/nft/${col.slug}" target="_blank" rel="noopener" class="admin-link" style="flex:1; padding:6px; border-radius:4px; background:rgba(52,211,153,0.1); border:1px solid #34d399; color:#34d399; text-align:center; font-size:11px; text-decoration:none;">📱 t.me/nft</a>
+            ${col.marketUrl ? `<a href="${col.marketUrl}" target="_blank" rel="noopener" class="admin-link" style="flex:1; padding:6px; border-radius:4px; background:rgba(168,85,247,0.1); border:1px solid #a855f7; color:#a855f7; text-align:center; font-size:11px; text-decoration:none;">🔗 Маркет</a>` : ''}
+          </div>
+          ` : col.slug ? `
+          <div class="model-nft-link" style="padding:8px 0; border-top:1px solid rgba(255,255,255,0.1);">
+            <a href="https://t.me/nft/${col.slug}" target="_blank" rel="noopener" style="display:block; padding:6px; text-align:center; font-size:11px; color:#34d399; text-decoration:none;">📱 Смотреть на t.me/nft</a>
+          </div>
+          ` : ''}
         </div>
-      `).join("");
+      `}).join("");
 
       const triggerModelBuy = (mIdx) => {
         haptic("medium");
@@ -774,6 +844,14 @@
 
       box.querySelectorAll(".model-bolt, .model-buy-btn").forEach((btn) => {
         btn.addEventListener("click", () => triggerModelBuy(Number(btn.dataset.mIdx)));
+      });
+
+      // Initialize Lottie animations for models with animation URLs
+      box.querySelectorAll(".model-animation-container").forEach((container) => {
+        const animUrl = container.getAttribute("data-animation-url");
+        if (animUrl) {
+          playLottieAnimation(container, animUrl);
+        }
       });
 
       switchScreen("nft-models", col.title, "Характеристики и модели", "./icons/nft.png");

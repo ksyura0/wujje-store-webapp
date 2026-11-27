@@ -163,11 +163,26 @@ const API = {
   },
 
   /**
-   * Get gifts list
+   * Get gifts list with Telegram auth
    */
   async getGifts() {
     try {
-      const response = await fetch(`${CONFIG.API_BASE}/api/gifts`, { method: "GET" });
+      const tg = window.Telegram?.WebApp;
+      const initData = tg?.initData || "";
+
+      // Build URL with initData as query param if available
+      let url = `${CONFIG.API_BASE}/api/gifts`;
+      if (initData) {
+        url += `?initData=${encodeURIComponent(initData)}`;
+      }
+
+      const headers = { method: "GET" };
+      // Add Telegram auth header
+      if (initData) {
+        headers["X-Telegram-Init-Data"] = initData;
+      }
+
+      const response = await fetch(url, headers);
       if (!response.ok) {
         return null;
       }
