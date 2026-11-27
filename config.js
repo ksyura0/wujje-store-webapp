@@ -9,7 +9,7 @@ const CONFIG = {
   SAFE_MARKUP: 1.12,
 
   // API Configuration
-  API_BASE: "https://golf-each-hook-solve.trycloudflare.com",
+  API_BASE: "https://outcomes-poster-vista-prophet.trycloudflare.com",
   DEFAULT_PAY_URL: "https://t.tb.ru/pm_short/2L0Yb9q9Ehb",
 
   // Blockchain
