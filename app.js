@@ -123,11 +123,11 @@
 
     // PACKAGES is now guaranteed at window scope
 
-    // Load NFT collections from API with real data
-    window.NFT_COLLECTIONS = [];
+    // Load gifts feed from API with real data (flat list, not collections)
+    window.GIFTS_FEED = [];
     window.ADMIN_FLAG = false;  // Store admin status globally
 
-    async function initNftCollections() {
+    async function initGiftsFeed() {
       const apiData = await API.getGifts();
 
       // Extract admin flag from API response
@@ -136,89 +136,44 @@
       }
 
       if (apiData?.gifts && Array.isArray(apiData.gifts)) {
-        window.NFT_COLLECTIONS = apiData.gifts.map((gift) => {
-          // Extract floor prices (actual or computed)
-          const floorTon = Number(gift.floor_ton || gift.floorTon || 0);
-          const floorRub = Number(gift.floor_rub || gift.floorRub || 0);
+        // Flatten: each gift item becomes a separate card in the feed
+        window.GIFTS_FEED = apiData.gifts.map((gift) => {
+          const priceTon = Number(gift.price_ton || gift.floor_ton || 0);
+          const priceRub = Number(gift.price_rub || gift.floor_rub || 0);
           const imageUrl = gift.image_url || gift.img || "";
           const animationUrl = gift.animation_url || gift.sticker_tgs || "";
           const marketUrl = gift.admin_market_url || gift.market_url || "";
           const slug = gift.slug || gift.id || "";
-
-          // Fallback SVG if image not available
-          const fallbackSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23333' width='160' height='160' rx='8'/%3E%3Ctext x='50%25' y='50%25' font-size='40' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3E🎁%3C/text%3E%3C/svg%3E`;
-
-          // Process real models from API, or fallback to creating synthetic ones
-          let models = [];
-          if (gift.models && Array.isArray(gift.models) && gift.models.length > 0) {
-            // Use real models from API
-            models = gift.models.map((model) => ({
-              name: model.model || model.name || "Модель",
-              rarity: model.rarity || "common",
-              bg: model.backdrop || model.attributes?.background || "#333",
-              pattern: model.attributes?.pattern || "standard",
-              floorTon: Number(model.price_ton || model.floor_ton || floorTon),
-              floorRub: Number(model.price_rub || model.floor_rub || floorRub),
-              img: model.image_url || model.img || imageUrl || fallbackSvg,
-              animationUrl: model.animation_url || animationUrl
-            }));
-          } else {
-            // Fallback: create synthetic models if none provided
-            models = [
-              {
-                name: "Стандартная",
-                rarity: "50%",
-                bg: "#333",
-                pattern: "standard",
-                floorTon: floorTon,
-                floorRub: floorRub,
-                img: imageUrl || fallbackSvg,
-                animationUrl: animationUrl
-              }
-            ];
-          }
+          const model = gift.model || gift.name || "";
+          const backdrop = gift.backdrop || gift.attributes?.background || "";
+          const number = gift.number || gift.id || "";
 
           return {
             id: gift.id,
-            title: gift.title,
-            floorTon: floorTon,
-            floorRub: floorRub,
-            rarity: gift.rarity || "common",
-            marketplace: gift.marketplace || "fragment",
-            img: imageUrl || fallbackSvg,
-            animationUrl: animationUrl,
+            title: gift.title || "Подарок",
+            model: model,
+            backdrop: backdrop,
+            number: number,
             slug: slug,
-            marketUrl: marketUrl,
-            models: models
+            priceTon: priceTon,
+            priceRub: priceRub,
+            img: imageUrl,
+            animationUrl: animationUrl,
+            marketUrl: window.ADMIN_FLAG && marketUrl ? marketUrl : "",
+            searchText: `${gift.title || ""} ${model} ${backdrop} ${number}`.toLowerCase()
           };
         });
       } else {
-        // Fallback to local data if API fails
-        window.NFT_COLLECTIONS = (window.RAW_122_GIFTS || []).map(([title, floorTon]) => {
-          const baseFloor = Math.max(0.1, Number(floorTon) / 1000);
-          const baseFloorRub = tonFloorToRub(baseFloor);
-          const fallbackSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23333' width='160' height='160' rx='8'/%3E%3Ctext x='50%25' y='50%25' font-size='40' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3E🎁%3C/text%3E%3C/svg%3E`;
-
-          return {
-            id: title.toLowerCase().replace(/\\s+/g, '-'),
-            title,
-            floorTon: baseFloor,
-            floorRub: baseFloorRub,
-            rarity: "common",
-            marketplace: "fallback",
-            img: fallbackSvg,
-            models: [
-              { name: "Стандартная", rarity: "50%", floorTon: baseFloor, floorRub: baseFloorRub, img: fallbackSvg },
-              { name: "Редкая", rarity: "30%", floorTon: Math.round(baseFloor * 1.5 * 100) / 100, floorRub: Math.round(baseFloorRub * 1.5), img: fallbackSvg },
-              { name: "Эпическая", rarity: "15%", floorTon: Math.round(baseFloor * 2.5 * 100) / 100, floorRub: Math.round(baseFloorRub * 2.5), img: fallbackSvg },
-              { name: "Легендарная", rarity: "4%", floorTon: Math.round(baseFloor * 4 * 100) / 100, floorRub: Math.round(baseFloorRub * 4), img: fallbackSvg },
-              { name: "Мифическая", rarity: "1%", floorTon: Math.round(baseFloor * 7 * 100) / 100, floorRub: Math.round(baseFloorRub * 7), img: fallbackSvg }
+        // Fallback: empty feed if API fails
+        window.GIFTS_FEED = [];
+      }
+    }
             ]
           };
         });
       }
     }
-    initNftCollections();
+    initGiftsFeed();
 
     // Build NFT collections and CATEGORIES from catalog data
     window.CATEGORIES = [
@@ -233,8 +188,10 @@
       },
       {
         id: "nft_gifts", group: "nft", img: "./icons/nft.png", emoji: "🎁",
-        title: "NFT подарки", desc: "122 коллекции, модели и флор", fromText: `От ${(window.NFT_COLLECTIONS?.[5]?.floorRub) || 150} ₽`, badge: "122 в наличии",
-        action: "openNftList"
+        title: "NFT подарки", desc: "Простая лента подарков",
+        get fromText() { return window.GIFTS_FEED?.length > 0 ? `От ${fmt(Math.min(...window.GIFTS_FEED.map(g => g.priceRub)))} ₽` : "От 150 ₽"; },
+        get badge() { return `${window.GIFTS_FEED?.length || 0} в наличии`; },
+        action: "openGiftsFeed"
       },
       {
         id: "roblox", group: "games", img: "./icons/roblox.png", emoji: "🧱",
@@ -567,9 +524,9 @@
 
     function goBack() {
       haptic("light");
-      if (currentView === "nft-models") openNftList();
-      else if ((currentView === "stars" || currentView === "product") && activeCategory?.action === "openNftList" && activeNftCollection) openNftModels(activeNftCollection);
-      else if ((currentView === "stars" || currentView === "product") && activeCategory && activeCategory.action !== "openNftList") openCategory(activeCategory);
+      if (currentView === "gift-detail") openGiftsFeed();
+      else if ((currentView === "stars" || currentView === "product") && activeCategory?.action === "openGiftsFeed") openGiftsFeed();
+      else if ((currentView === "stars" || currentView === "product") && activeCategory && activeCategory.action !== "openGiftsFeed") openCategory(activeCategory);
       else switchScreen("hub", "Wujje Store", "Выдача 24/7 · В наличии");
     }
 
@@ -688,98 +645,156 @@
         `;
         card.addEventListener("click", () => {
           haptic("light");
-          if (cat.action === "openNftList") { activeCategory = cat; openNftList(); }
+          if (cat.action === "openGiftsFeed") { activeCategory = cat; openGiftsFeed(); }
           else openCategory(cat);
         });
         grid.appendChild(card);
       });
     }
 
-    const nftSearchInput = document.getElementById("nftSearchInput");
-    function renderNftList(filterText = "") {
-      const q = filterText.trim().toLowerCase();
-      const filtered = NFT_COLLECTIONS.filter((c) => !q || c.title.toLowerCase().includes(q));
-      const grid = document.getElementById("nftCollectionsGrid");
+    const giftsSearchInput = document.getElementById("nftSearchInput");  // Переиспользуем существующий элемент
 
-      const getFallbackImage = (title) => {
+    function renderGiftsFeed(filterText = "") {
+      const q = filterText.trim().toLowerCase();
+      const filtered = window.GIFTS_FEED.filter((gift) => !q || gift.searchText.includes(q));
+      const grid = document.getElementById("nftCollectionsGrid");  // Переиспользуем сетку
+
+      const getFallbackImage = () => {
         const symbol = "🎁";
         return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23333' width='160' height='160' rx='8'/%3E%3Ctext x='50%25' y='50%25' font-size='40' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3E${encodeURIComponent(symbol)}%3C/text%3E%3C/svg%3E`;
       };
 
-      grid.innerHTML = filtered.map((col) => {
-        const realIdx = NFT_COLLECTIONS.indexOf(col);
-        const fallback = getFallbackImage(col.title);
-
-        // Build admin links if applicable
-        let adminLinksHtml = "";
-        if (window.ADMIN_FLAG && (col.slug || col.marketUrl)) {
-          let adminLinks = [];
-          if (col.slug) {
-            adminLinks.push(`<a href="https://t.me/nft/${col.slug}" target="_blank" rel="noopener" style="font-size:11px; color:#34d399; padding:4px 8px; background:rgba(52,211,153,0.1); border-radius:3px; text-decoration:none;">📱 t.me/nft</a>`);
-          }
-          if (col.marketUrl) {
-            adminLinks.push(`<a href="${col.marketUrl}" target="_blank" rel="noopener" style="font-size:11px; color:#a855f7; padding:4px 8px; background:rgba(168,85,247,0.1); border-radius:3px; text-decoration:none;">🔗 Маркет</a>`);
-          }
-          if (adminLinks.length > 0) {
-            adminLinksHtml = `<div style="display:flex; gap:4px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.1); margin-top:6px;">${adminLinks.join("")}</div>`;
-          }
-        }
+      grid.innerHTML = filtered.map((gift, idx) => {
+        const fallback = getFallbackImage();
+        const displayPrice = `${fmt(gift.priceRub)} ₽`;
+        const displayTon = gift.priceTon ? `${gift.priceTon} TON` : "—";
 
         return `
-          <div class="nft-card">
-            <div class="nft-img-wrap" data-col-idx="${realIdx}">
-              <img src="${col.img}" alt="${col.title}" onerror="this.src='${fallback}';" loading="lazy"/>
-              <button type="button" class="bolt-btn nft-quick-bolt" data-col-idx="${realIdx}" title="Быстрая покупка">⚡</button>
+          <div class="gift-card" data-gift-idx="${idx}">
+            <div class="gift-img-wrap" data-gift-idx="${idx}">
+              <img src="${gift.img}" alt="${gift.title}" onerror="this.src='${fallback}';" loading="lazy"/>
+              <button type="button" class="bolt-btn gift-quick-bolt" data-gift-idx="${idx}" title="Быстрая покупка">⚡</button>
             </div>
-            <div class="nft-body" data-col-idx="${realIdx}">
-              <div class="nft-title">${col.title}</div>
-              <div class="nft-meta">${col.models?.length || 0} модели · В наличии</div>
-              <div class="nft-floor-row">
+            <div class="gift-body" data-gift-idx="${idx}">
+              <div class="gift-title">${gift.title}</div>
+              ${gift.model ? `<div class="gift-meta">📦 ${gift.model}</div>` : ''}
+              ${gift.backdrop ? `<div class="gift-meta">🎨 ${gift.backdrop}</div>` : ''}
+              <div class="gift-floor-row">
                 <div>
-                  <div class="nft-price">Флор ${fmt(col.floorRub)} ₽</div>
-                  <div class="nft-ton">${col.floorTon} TON</div>
+                  <div class="gift-price">${displayPrice}</div>
+                  <div class="gift-ton">${displayTon}</div>
                 </div>
-                <span class="tag-pill">Модели →</span>
               </div>
-              ${adminLinksHtml}
+              ${window.ADMIN_FLAG && gift.marketUrl ? `<div style="margin-top:6px;"><a href="${gift.marketUrl}" target="_blank" rel="noopener" style="display:inline-block;font-size:11px;color:#a855f7;padding:4px 8px;background:rgba(168,85,247,0.1);border:1px solid #a855f7;border-radius:3px;text-decoration:none;">🔗 Маркет</a></div>` : ''}
             </div>
           </div>
         `;
       }).join("");
 
-      grid.querySelectorAll(".nft-img-wrap, .nft-body").forEach((el) => {
+      // Update placeholder
+      if (giftsSearchInput) {
+        giftsSearchInput.placeholder = `Поиск по подаркам и моделям (${window.GIFTS_FEED.length})...`;
+      }
+
+      grid.querySelectorAll(".gift-img-wrap, .gift-body").forEach((el) => {
         el.addEventListener("click", (e) => {
           if (e.target.closest(".bolt-btn") || e.target.closest("a")) return;
           haptic("light");
-          openNftModels(NFT_COLLECTIONS[Number(el.dataset.colIdx)]);
+          openGiftDetail(filtered[Number(el.dataset.giftIdx)]);
         });
       });
 
-      grid.querySelectorAll(".nft-quick-bolt").forEach((btn) => {
+      grid.querySelectorAll(".gift-quick-bolt").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           haptic("medium");
-          const col = NFT_COLLECTIONS[Number(btn.dataset.colIdx)];
+          const gift = filtered[Number(btn.dataset.giftIdx)];
           openCheckout({
             mode: "product",
-            label: `${col.title} (Floor)`,
-            rub: col.floorRub,
-            ton: col.floorTon,
+            label: `${gift.title}${gift.model ? ` · ${gift.model}` : ''}`,
+            rub: gift.priceRub,
+            ton: gift.priceTon,
             target: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@username"
           });
         });
       });
     }
 
-    nftSearchInput.addEventListener("input", () => renderNftList(nftSearchInput.value));
-
-    function openNftList() {
-      nftSearchInput.value = "";
-      renderNftList("");
-      switchScreen("nft-list", "NFT подарки (122)", "Флор, модели и быстрая покупка ⚡", "./icons/nft.png");
+    if (giftsSearchInput) {
+      giftsSearchInput.addEventListener("input", () => renderGiftsFeed(giftsSearchInput.value));
     }
 
-    function openNftModels(col) {
+    function openGiftsFeed() {
+      if (giftsSearchInput) giftsSearchInput.value = "";
+      renderGiftsFeed("");
+      switchScreen("gifts-feed", "NFT подарки", "Поиск и покупка ⚡", "./icons/nft.png");
+    }
+
+    // Gift detail modal
+    function openGiftDetail(gift) {
+      if (!gift) return;
+
+      const modal = document.createElement("div");
+      modal.className = "modal-backdrop gift-detail-modal";
+
+      let imageHtml = `<img src="${gift.img}" alt="${gift.title}"/>`;
+      if (gift.animationUrl) {
+        imageHtml = `<div class="detail-animation-container" data-animation-url="${gift.animationUrl}">${imageHtml}</div>`;
+      }
+
+      let detailContent = `
+        <div class="modal-content gift-detail-content">
+          <button class="modal-close" type="button">✕</button>
+          <div class="detail-preview">
+            ${imageHtml}
+          </div>
+          <div class="detail-info">
+            <h3 style="font-size:16px; font-weight:900; margin:0 0 8px; line-height:1.2;">${gift.title}</h3>
+            ${gift.model ? `<p style="font-size:12px; color:var(--muted); margin:0 0 4px;"><b>Модель:</b> ${gift.model}</p>` : ''}
+            ${gift.backdrop ? `<p style="font-size:12px; color:var(--muted); margin:0 0 4px;"><b>Фон:</b> ${gift.backdrop}</p>` : ''}
+            ${gift.number ? `<p style="font-size:12px; color:var(--muted); margin:0 0 8px;"><b>№</b> ${gift.number}</p>` : ''}
+            <div style="display:flex; align-items:center; gap:12px; padding:10px; background:var(--field); border-radius:12px; margin:12px 0;">
+              <div>
+                <div style="font-size:14px; font-weight:900; color:var(--price);">${fmt(gift.priceRub)} ₽</div>
+                <div style="font-size:11px; color:var(--muted);">${gift.priceTon} TON</div>
+              </div>
+            </div>
+            <button class="hero-btn" data-gift-buy style="width:100%; margin-bottom:8px;">⚡ Купить подарок</button>
+            <a href="https://t.me/nft/${gift.slug}" target="_blank" rel="noopener" style="display:block; padding:10px; text-align:center; border:1px solid #34d399; border-radius:12px; color:#34d399; text-decoration:none; font-weight:600; font-size:12px;">📱 Смотреть на t.me/nft</a>
+            ${window.ADMIN_FLAG && gift.marketUrl ? `<a href="${gift.marketUrl}" target="_blank" rel="noopener" style="display:block; padding:10px; margin-top:8px; text-align:center; border:1px solid #a855f7; border-radius:12px; color:#a855f7; text-decoration:none; font-weight:600; font-size:12px;">🔗 Маркет</a>` : ''}
+          </div>
+        </div>
+      `;
+
+      modal.innerHTML = detailContent;
+      document.body.appendChild(modal);
+
+      // Close button
+      const closeBtn = modal.querySelector(".modal-close");
+      closeBtn?.addEventListener("click", () => modal.remove());
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.remove();
+      });
+
+      // Buy button
+      const buyBtn = modal.querySelector("[data-gift-buy]");
+      buyBtn?.addEventListener("click", () => {
+        modal.remove();
+        openCheckout({
+          mode: "product",
+          label: `${gift.title}${gift.model ? ` · ${gift.model}` : ''}`,
+          rub: gift.priceRub,
+          ton: gift.priceTon,
+          target: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : "@username"
+        });
+      });
+
+      // Load animation if available
+      const animContainer = modal.querySelector(".detail-animation-container");
+      if (animContainer && gift.animationUrl) {
+        playLottieAnimation(animContainer, gift.animationUrl);
+      }
+    }
       activeNftCollection = col;
       document.getElementById("nftColTitle").textContent = col.title;
       document.getElementById("nftColFloorInfo").textContent = `Базовый флор: ${fmt(col.floorRub)} ₽ (${col.floorTon} TON) · Редкие модели дороже`;
