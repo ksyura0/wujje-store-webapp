@@ -534,10 +534,10 @@
       btn.addEventListener("click", () => {
         haptic("light");
         const tab = btn.dataset.tab;
-        if (tab === "hub") switchScreen("hub", "Wujje Store", "Выдача 24/7 · В наличии");
-        if (tab === "orders") { renderOrders(); switchScreen("orders", "Мои заказы", "История покупок"); }
-        if (tab === "profile") { renderProfile(); syncReferralInfo(); switchScreen("profile", "Профиль", "Ранги, темы и рефералка"); }
-        if (tab === "faq") switchScreen("faq", "Вопросы и ответы", "Поддержка и оферта");
+        if (tab === "hub") { if (typeof switchScreen === 'function') switchScreen("hub", "Wujje Store", "Выдача 24/7 · В наличии"); }
+        if (tab === "orders") { if (typeof renderOrders === 'function') renderOrders(); if (typeof switchScreen === 'function') switchScreen("orders", "Мои заказы", "История покупок"); }
+        if (tab === "profile") { if (typeof renderProfile === 'function') renderProfile(); if (typeof syncReferralInfo === 'function') syncReferralInfo(); if (typeof switchScreen === 'function') switchScreen("profile", "Профиль", "Ранги, темы и рефералка"); }
+        if (tab === "faq") { if (typeof switchScreen === 'function') switchScreen("faq", "Вопросы и ответы", "Поддержка и оферта"); }
       });
     });
 
