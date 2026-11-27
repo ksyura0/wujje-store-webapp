@@ -492,7 +492,7 @@
       100% { transform: scale(1); opacity: 1; }
     }
   </style>
-  <script src="app.js?v=20261127_8" defer></script>
+  <script src="app.js?v=20261127_9" defer></script>
   <script>
   // Live gifts catalog integration - runs after main app initialization
   function resolveGiftArtwork(item, fallbackSvg) {
@@ -533,7 +533,7 @@
       const first = groupItems[0];
       const rubPrice = Math.max(1, Number(first.price_rub || 0) || tonFloorToRub(first.price_ton || 5));
       const tonPrice = Number(first.price_ton || rubToTonSafe(rubPrice));
-      const fallbackArt = svgArt(colName, `Floor ${rubPrice} ₽`, "#17112e", "#a855f7", "🎁");
+      const fallbackArt = typeof svgArt === 'function' ? svgArt(colName, `Floor ${rubPrice} ₽`, "#17112e", "#a855f7", "🎁") : "";
       const resolvedArt = resolveGiftArtwork(first, fallbackArt);
 
       const models = groupItems.map((g, i) => {
@@ -541,7 +541,7 @@
         const mTon = Number(g.price_ton || rubToTonSafe(mRub));
         const mName = String(g.model || `${colName} #${i + 1}`).trim();
         const mBg = String(g.backdrop || "Midnight Violet").trim();
-        const mFb = svgArt(mName, `${mRub} ₽`, "#181033", "#c084fc", "⚡");
+        const mFb = typeof svgArt === 'function' ? svgArt(mName, `${mRub} ₽`, "#181033", "#c084fc", "⚡") : "";
         return {
           giftId: String(g.id || ""),
           name: mName,
@@ -608,7 +608,7 @@
 
     grid.innerHTML = filtered.map((col) => {
       const realIdx = NFT_COLLECTIONS.indexOf(col);
-      const fb = svgArt(col.title, `Floor ${col.floorRub} ₽`, "#17112e", "#a855f7", "🎁");
+      const fb = typeof svgArt === 'function' ? svgArt(col.title, `Floor ${col.floorRub} ₽`, "#17112e", "#a855f7", "🎁") : "";
       const src = resolveGiftArtwork(col, fb);
       return `
         <div class="nft-card">
@@ -666,7 +666,7 @@
 
     const box = document.getElementById("nftModelsContainer");
     box.innerHTML = col.models.map((m, mIdx) => {
-      const fb = svgArt(m.name, `${m.floorRub} ₽`, "#181033", "#c084fc", "⚡");
+      const fb = typeof svgArt === 'function' ? svgArt(m.name, `${m.floorRub} ₽`, "#181033", "#c084fc", "⚡") : "";
       const src = resolveGiftArtwork(m, fb);
       return `
         <div class="model-card">
