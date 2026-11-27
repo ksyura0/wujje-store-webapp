@@ -2234,3 +2234,13 @@
     });
 
     setInterval(() => { if (document.visibilityState === "visible") syncBalance(); }, 5000);
+
+    // Ensure initialization completes on DOM ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        console.log("🚀 DOMContentLoaded: app.js fully initialized, renderCategories called");
+      });
+    } else {
+      console.log("🚀 Document already loaded: app.js fully initialized, renderCategories called");
+    }
+  })();
